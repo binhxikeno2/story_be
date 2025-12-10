@@ -1,0 +1,6 @@
+version: '3.8'
+services:
+  app:
+    image: binhxikeno2/my_blog_be:lastest
+    ports:
+      - '3003:3003'
