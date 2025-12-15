@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { UserEntity } from 'database/entities';
 import { UserRepository } from 'database/repositories/user.repository';
-import { Message, MessageCode } from 'shared/constants/app.constant';
+import { MessageCode } from 'shared/constants/app.constant';
 import { ApiBadRequestException } from 'shared/types';
 
 import { CreateUserReqDto, UserReqDto } from './dto/request';
-import { UserEntity } from 'database/entities';
-import { IsNull } from 'typeorm';
 
 @Injectable()
 export class UserService {

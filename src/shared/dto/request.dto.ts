@@ -1,17 +1,9 @@
-import { Transform } from 'class-transformer';
-import { ToBooleanOrUndefined } from 'shared/decorators/boolean.decorator';
-import { ExposeApiProperty } from 'shared/decorators/property.decorator';
+import { CheckApiProperty } from 'shared/validators/checkProperty.decorator';
 
 export class ApiBaseGetListQueries {
-  @ExposeApiProperty()
-  @Transform(({ value }) => (value ? value : 1))
+  @CheckApiProperty()
   page?: number;
 
-  @ExposeApiProperty()
-  @Transform(({ value }) => (value ? value : 20))
+  @CheckApiProperty()
   perPage?: number;
-
-  @ExposeApiProperty({ description: 'Includes soft-deleted items in result if deleted=true' })
-  @ToBooleanOrUndefined()
-  deleted?: boolean;
 }

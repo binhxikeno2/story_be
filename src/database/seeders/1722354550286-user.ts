@@ -10,12 +10,12 @@ export class User1722354550286 implements Seeder {
       {
         name: 'admin',
         email: 'admin@gmail.com',
-        password: await hashBcrypt('123'),
+        password: await hashBcrypt('admin123'),
       },
       {
         name: 'test01',
         email: 'test01@gmail.com',
-        password: await hashBcrypt('123'),
+        password: await hashBcrypt('test01123'),
       },
     ];
   }

@@ -1,13 +1,12 @@
 import { Body, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { MessageCode } from 'shared/constants/app.constant';
-import { BaseController } from 'shared/controllers/base.controller';
+import { AdminController } from 'shared/controllers/admin.controller';
+import { ApiAdminController } from 'shared/decorators/apiController.decorator';
 import { ApiBaseOkResponse } from 'shared/decorators/apiDoc.decorator';
 
 import { CreateUserReqDto, UserReqDto } from './dto/request';
 import { UserListResDto, UserResDto } from './dto/response';
 import { UserService } from './user.service';
-import { AdminController } from 'shared/controllers/admin.controller';
-import { ApiAdminController } from 'shared/decorators/apiController.decorator';
 
 @ApiAdminController({
   name: 'user',

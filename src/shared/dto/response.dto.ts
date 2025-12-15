@@ -60,3 +60,14 @@ export class BaseBaseResDto {
   @ExposeApiProperty()
   updatedAt: string;
 }
+
+export class HasIdResDto {
+  @ExposeApiProperty()
+  id: number;
+}
+
+export function convertDataToInstance<T extends object>(data: Partial<T> | undefined, instance: T): void {
+  if (data) {
+    Object.assign(instance, data);
+  }
+}

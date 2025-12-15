@@ -1,9 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Message, MessageCode } from 'shared/constants/app.constant';
-import { ApiUnauthorizedException } from 'shared/types/apiException.type';
+import { ApiForbiddenException, ApiUnauthorizedException } from 'shared/types/apiException.type';
 import { IApplicantSign } from 'shared/types/applicantSign.type';
-import { IDataSign } from 'shared/types/dataSign.type';
 import { verifyData } from 'shared/utils/jwt';
 
 const getToken = (context: ExecutionContext, prefix: string) => {
@@ -16,7 +15,7 @@ const getToken = (context: ExecutionContext, prefix: string) => {
 
 @Injectable()
 export class AuthenticateUser implements CanActivate {
-  public constructor(private readonly reflector: Reflector) {}
+  public constructor(private readonly reflector: Reflector) { }
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.get<boolean>('isPublic', context.getHandler());
     if (isPublic) {
@@ -27,16 +26,19 @@ export class AuthenticateUser implements CanActivate {
     const token = getToken(context, 'Bearer ');
     if (token) {
       try {
-        const payload = verifyData<IDataSign>(token);
-        if (payload.userId && payload.userDiv && payload.sessionId) {
+        const payload = verifyData<any>(token);
+        // Token payload chứa { id, email } từ auth.service.signToken
+        if (payload.id && payload.email) {
           request.user = payload;
 
           return true;
         }
       } catch (ex) {
         if (ex.name === 'TokenExpiredError') {
-          throw new ApiUnauthorizedException(MessageCode.expiredToken, Message.expiredToken);
+          throw new ApiForbiddenException(MessageCode.expiredToken, Message.expiredToken);
         }
+
+        throw new ApiUnauthorizedException(MessageCode.badToken, Message.badToken);
       }
     }
 
@@ -46,7 +48,7 @@ export class AuthenticateUser implements CanActivate {
 
 @Injectable()
 export class AuthenticateApplicant implements CanActivate {
-  public constructor(private readonly reflector: Reflector) {}
+  public constructor(private readonly reflector: Reflector) { }
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.get<boolean>('isPublic', context.getHandler());
     if (isPublic) {
@@ -79,7 +81,7 @@ export class AuthenticateApplicant implements CanActivate {
 
 @Injectable()
 export class AuthenticatePublicApiKey implements CanActivate {
-  public constructor(private readonly reflector: Reflector) {}
+  public constructor(private readonly reflector: Reflector) { }
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.get<boolean>('isPublic', context.getHandler());
     if (isPublic) {

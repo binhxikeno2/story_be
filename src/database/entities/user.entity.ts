@@ -1,7 +1,7 @@
-import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
+
 import { BaseEntity } from './base.entity';
 import { PersonalTokenEntity } from './personalToken.entity';
-import { QuestionEntity } from './question.entity';
 
 @Entity('user')
 export class UserEntity extends BaseEntity {
@@ -23,7 +23,4 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => PersonalTokenEntity, (personalToken) => personalToken.user)
   personalTokens: PersonalTokenEntity[];
-
-  @OneToMany(() => QuestionEntity, (question) => question.author)
-  questions: QuestionEntity[];
 }

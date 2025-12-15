@@ -42,6 +42,6 @@ export const LengthConfig = {
 };
 
 export const TimeConfig = {
-  accessToken: `${60 * 10}`,
-  refreshToken: `${30 * 24 * 60 * 60}`,
+  accessToken: 60 * 60 * 24,  // 24 hours (24 * 60 * 60)
+  refreshToken: 60 * 60 * 24 * 10, // 10 days (10 * 24 * 60 * 60) 
 };

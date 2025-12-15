@@ -1,8 +1,8 @@
+import * as moment from 'dayjs';
 import { AfterLoad, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { BaseEntity } from './base.entity';
 import { UserEntity } from './user.entity';
-import * as moment from 'dayjs';
 
 @Entity('personal_token')
 export class PersonalTokenEntity extends BaseEntity {
@@ -19,12 +19,12 @@ export class PersonalTokenEntity extends BaseEntity {
   @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
   user: UserEntity;
 
-  // TODO
   @AfterLoad()
   isValidToken() {
-    const created = moment(this.createdAt);
-    const expired = moment(this.createdAt).add(Number(this.expiresIn), 'seconds');
+    const now = moment();
+    const expiredTime = Number(this.expiresIn) || 0;
+    const expired = moment(this.createdAt).add(expiredTime, 'seconds');
 
-    return !!this.token && created <= expired;
+    return !!this.token && (now.isBefore(expired) || now.isSame(expired));
   }
 }
