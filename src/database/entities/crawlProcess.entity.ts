@@ -1,6 +1,7 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { BaseEntity } from './base.entity';
+import { CategoryEntity } from './category.entity';
 
 export enum CrawlStatus {
     IN_PROGRESS = 'inprogress',
@@ -23,6 +24,12 @@ export class CrawlProcessEntity extends BaseEntity {
     })
     public status: CrawlStatus;
 
+    @Column({
+        type: 'bigint',
+        name: 'limit_time',
+        nullable: true,
+    })
+    public limitTime: number;
 
     @Column({
         type: 'timestamp',
@@ -33,6 +40,7 @@ export class CrawlProcessEntity extends BaseEntity {
     @Column({
         type: 'timestamp',
         name: 'ended_process_at',
+        nullable: true,
     })
     public endedProcessAt: Date;
 
@@ -41,4 +49,14 @@ export class CrawlProcessEntity extends BaseEntity {
         nullable: true,
     })
     public numberOfPostCrawled: number;
+
+    @Column({ nullable: true })
+    public categoryId?: number;
+
+    @ManyToOne(() => CategoryEntity, (category) => category.posts, {
+        nullable: true,
+        onDelete: 'SET NULL',
+    })
+    @JoinColumn({ name: 'categoryId' })
+    public category?: CategoryEntity;
 }

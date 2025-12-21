@@ -36,9 +36,9 @@ type DeleteCriteria<T> =
 type SoftDeleteCriteria = string | string[] | number | number[] | Date | Date[] | ObjectId | ObjectId[] | any;
 
 export class BaseRepository<T extends ObjectLiteral> {
-  constructor(private readonly target: EntityTarget<T>, private readonly dataSource: DataSource) {}
+  constructor(protected readonly target: EntityTarget<T>, protected readonly dataSource: DataSource) {}
 
-  private getRepository(): Repository<T> {
+  protected getRepository(): Repository<T> {
     return this.dataSource.getRepository(this.target);
   }
 

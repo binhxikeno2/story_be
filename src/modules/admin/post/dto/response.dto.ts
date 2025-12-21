@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { convertDataToInstance, HasIdResDto, Pagination } from 'shared/dto/response.dto';
 
 export class StoryPostResDto {
@@ -38,6 +38,7 @@ export class PostResDto extends HasIdResDto {
 
     @ApiProperty()
     @Expose()
+    @Transform(({ obj }) => obj.category?.name)
     category: string;
 
     @ApiProperty()
@@ -78,6 +79,7 @@ export class PostListItemResDto extends HasIdResDto {
 
     @ApiProperty()
     @Expose()
+    @Transform(({ obj }) => obj.category?.name)
     category: string;
 
     @ApiProperty()

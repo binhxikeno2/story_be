@@ -1,7 +1,8 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { ChapterEntity } from '.';
 import { BaseEntity } from './base.entity';
+import { CategoryEntity } from './category.entity';
 
 @Entity('post')
 export class PostEntity extends BaseEntity {
@@ -22,11 +23,15 @@ export class PostEntity extends BaseEntity {
     })
     public tags: string[];
 
-    @Column({
-        length: 100,
+    @Column({ nullable: true })
+    public categoryId?: number;
+
+    @ManyToOne(() => CategoryEntity, (category) => category.posts, {
         nullable: true,
+        onDelete: 'SET NULL',
     })
-    public category: string;
+    @JoinColumn({ name: 'categoryId' })
+    public category?: CategoryEntity;
 
     @Column({
         length: 500,

@@ -1,22 +1,9 @@
-import { ChapterEntity, PostEntity, StoryEntity } from 'database/entities';
+import { CategoryEntity, ChapterEntity, PostEntity, StoryEntity } from 'database/entities';
 import { logger } from 'shared/logger/app.logger';
 import { DataSource, DeepPartial, QueryFailedError } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 
 export class Post1765380200000 implements Seeder {
-    private categories = [
-        'Technology',
-        'Science',
-        'Travel',
-        'Food',
-        'Lifestyle',
-        'Business',
-        'Entertainment',
-        'Sports',
-        'Health',
-        'Education',
-    ];
-
     private tagsList = [
         ['javascript', 'programming', 'web'],
         ['ai', 'machine-learning', 'tech'],
@@ -30,10 +17,6 @@ export class Post1765380200000 implements Seeder {
         ['learning', 'education', 'skills'],
     ];
 
-    private getRandomCategory(): string {
-        return this.categories[Math.floor(Math.random() * this.categories.length)];
-    }
-
     private getRandomTags(): string[] {
         const tags = this.tagsList[Math.floor(Math.random() * this.tagsList.length)];
 
@@ -44,13 +27,22 @@ export class Post1765380200000 implements Seeder {
         return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
     }
 
-    private async createPosts(): Promise<DeepPartial<PostEntity>[]> {
+    private async createPosts(dataSource: DataSource): Promise<DeepPartial<PostEntity>[]> {
+        const categoryRepository = dataSource.getRepository(CategoryEntity);
+        const categories = await categoryRepository.find();
+
+        if (categories.length === 0) {
+            logger.warn('No categories found. Please run Category seeder first.');
+
+            return [];
+        }
+
         const posts: DeepPartial<PostEntity>[] = [];
         const startDate = new Date('2024-01-01');
         const endDate = new Date();
 
         for (let i = 1; i <= 50; i++) {
-            const category = this.getRandomCategory();
+            const category = categories[Math.floor(Math.random() * categories.length)];
             const isRead = Math.random() > 0.5;
             const chaptersCount = Math.floor(Math.random() * 5) + 2; // 2-6 chapters per post
 
@@ -62,20 +54,20 @@ export class Post1765380200000 implements Seeder {
 
                 for (let k = 1; k <= storiesCount; k++) {
                     stories.push({
-                        title: `Story ${k}: The ${category} Journey - Part ${k}`,
+                        title: `Story ${k}: The ${category.name} Journey - Part ${k}`,
                         media: `https://picsum.photos/seed/post${i}ch${j}st${k}/800/600`,
                     });
                 }
 
                 chapters.push({
-                    title: `Chapter ${j}: Exploring ${category}`,
+                    title: `Chapter ${j}: Exploring ${category.name}`,
                     stories,
                 });
             }
 
             posts.push({
-                title: `${category} Guide #${i}: Mastering the Art`,
-                description: `This is a comprehensive guide about ${category.toLowerCase()}. Learn everything you need to know in this detailed post with multiple chapters covering various aspects. Perfect for beginners and advanced users alike.`,
+                title: `${category.name} Guide #${i}: Mastering the Art`,
+                description: `This is a comprehensive guide about ${category.name.toLowerCase()}. Learn everything you need to know in this detailed post with multiple chapters covering various aspects. Perfect for beginners and advanced users alike.`,
                 tags: this.getRandomTags(),
                 category,
                 thumbnailUrl: `https://picsum.photos/seed/post${i}/1200/800`,
@@ -95,12 +87,16 @@ export class Post1765380200000 implements Seeder {
         await queryRunner.startTransaction();
 
         try {
-            const posts = await this.createPosts();
+            const posts = await this.createPosts(dataSource);
 
-            // Save posts with cascade to save chapters and stories
-            await queryRunner.manager.save(PostEntity, posts, { chunk: 10 });
+            if (posts.length > 0) {
+                // Save posts with cascade to save chapters and stories
+                await queryRunner.manager.save(PostEntity, posts, { chunk: 10 });
+                logger.info(`🚀 Created ${posts.length} posts with chapters and stories successfully!`);
+            } else {
+                logger.warn('Skipped post creation due to missing categories.');
+            }
 
-            logger.info(`🚀 Created 50 posts with chapters and stories successfully!`);
             await queryRunner.commitTransaction();
         } catch (err) {
             if (err instanceof QueryFailedError) {

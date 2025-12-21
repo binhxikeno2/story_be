@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PostEntity } from 'database/entities';
+import { CategoryEntity, PostEntity } from 'database/entities';
 import { Pagination } from 'shared/dto/response.dto';
 import { DataSource, FindOptionsOrder, FindOptionsWhere, Like } from 'typeorm';
 
@@ -22,29 +22,51 @@ export class PostRepository extends BaseRepository<PostEntity> {
 
     public async getPostList(query: GetPostListQuery): Promise<Pagination<PostEntity[]>> {
         const { page, perPage, title, category, isRead } = query;
-        const queryCondition: FindOptionsWhere<PostEntity> = {};
+        const baseCondition: FindOptionsWhere<PostEntity> = {};
         const orderCondition: FindOptionsOrder<PostEntity> = {
             lastUpdated: 'DESC',
             createdAt: 'DESC',
         };
 
-        if (title) {
-            queryCondition.title = Like(`%${title}%`);
-        }
-
         if (category) {
-            queryCondition.category = category;
+            baseCondition.category = { slug: category };
         }
 
         if (isRead !== undefined) {
-            queryCondition.isRead = isRead;
+            baseCondition.isRead = isRead;
+        }
+
+        let whereCondition: FindOptionsWhere<PostEntity> | FindOptionsWhere<PostEntity>[];
+
+        if (title) {
+            const categoryBase = baseCondition.category as FindOptionsWhere<CategoryEntity> | undefined;
+            
+            whereCondition = [
+                { ...baseCondition, title: Like(`%${title}%`) },
+                { ...baseCondition, description: Like(`%${title}%`) },
+                { 
+                    ...baseCondition, 
+                    category: categoryBase 
+                        ? { ...categoryBase, name: Like(`%${title}%`) } 
+                        : { name: Like(`%${title}%`) } 
+                },
+                { 
+                    ...baseCondition, 
+                    category: categoryBase 
+                        ? { ...categoryBase, description: Like(`%${title}%`) } 
+                        : { description: Like(`%${title}%`) } 
+                },
+            ];
+        } else {
+            whereCondition = baseCondition;
         }
 
         return this.paginate(
             { page, perPage },
             {
-                where: queryCondition,
+                where: whereCondition,
                 order: orderCondition,
+                relations: ['category'],
             },
         );
     }
@@ -52,7 +74,7 @@ export class PostRepository extends BaseRepository<PostEntity> {
     public async getPostDetail(id: number): Promise<PostEntity | null> {
         return this.findOne({
             where: { id },
-            relations: ['chapters', 'chapters.stories'],
+            relations: ['chapters', 'chapters.stories', 'category'],
         });
     }
 }

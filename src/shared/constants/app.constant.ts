@@ -9,7 +9,9 @@ export enum MessageCode {
   wrongMailOrPassword = 'WRONG_MAIL_OR_PASSWORD',
   userNotFound = 'USER_NOT_FOUND',
   userExisted = 'USER_IS_EXISTED',
-  cannotDelete = 'CANNOT_DELETE'
+  cannotDelete = 'CANNOT_DELETE',
+  crawlInProgress = 'CRAWL_INPROGRESS',
+  categoryNotFound = 'CATEGORY_NOT_FOUND',
 }
 
 export const Message = {
