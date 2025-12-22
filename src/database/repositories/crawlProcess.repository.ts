@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CategoryEntity, CrawlProcessEntity, CrawlStatus } from 'database/entities';
+import { CategoryEntity, CrawlProcessEntity } from 'database/entities';
 import { CRAWL_PROCESS_POSTS_LIMIT } from 'modules/admin/crawlProcess/crawlProcess.constant';
-import { DataSource } from 'typeorm';
+import { CrawlStatus } from 'shared/constants/crawl.constant';
+import { DataSource, In } from 'typeorm';
 
 import { BaseRepository } from './base.repository';
 
@@ -15,27 +16,41 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
         return await this.getRepository()
             .createQueryBuilder('crawlProcess')
             .leftJoinAndSelect('crawlProcess.category', 'category')
-            .where('crawlProcess.status in (:...status)', { status: [CrawlStatus.IN_PROGRESS, CrawlStatus.ERROR] })
+            .where('crawlProcess.status in (:...status)', { status: [CrawlStatus.RUNNING_DETAIL, CrawlStatus.ERROR] })
             .orderBy('crawlProcess.createdAt', 'DESC')
             .getOne();
     }
 
     public async checkInProgressProcess(): Promise<boolean> {
         const process = await this.findOne({
-            where: { status: CrawlStatus.IN_PROGRESS },
+            where: {
+                status: In([
+                    CrawlStatus.CREATED,
+                    CrawlStatus.RUNNING,
+                    CrawlStatus.RUNNING_PAGE,
+                    CrawlStatus.RUNNING_DETAIL,
+                    CrawlStatus.FINALIZING,
+                ]),
+            },
         });
 
         return !!process;
     }
 
-    public async createCrawlProcess(category: CategoryEntity): Promise<CrawlProcessEntity> {
+    public async createCrawlProcess(
+        category: CategoryEntity,
+        pageFrom: number,
+        pageTo: number,
+    ): Promise<CrawlProcessEntity> {
         const now = new Date();
         const name = `Crawl Process - ${category.name} - ${now.toISOString()}`;
 
         const process = this.getRepository().create({
             name,
-            status: CrawlStatus.IN_PROGRESS,
+            status: CrawlStatus.CREATED,
             limitTime: CRAWL_PROCESS_POSTS_LIMIT,
+            pageFrom,
+            pageTo,
             startedProcessAt: now,
             category,
         });

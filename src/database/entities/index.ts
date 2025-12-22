@@ -2,6 +2,7 @@ export * from './base.entity';
 export * from './category.entity';
 export * from './chapter.entity';
 export * from './crawlProcess.entity';
+export * from './crawlProcessPage.entity';
 export * from './personalToken.entity';
 export * from './post.entity';
 export * from './story.entity';

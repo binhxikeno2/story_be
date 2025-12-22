@@ -10,10 +10,10 @@ export class TriggerCrawlProcessReqDto {
     @CheckApiProperty({ required: true })
     categoryId: number;
 
-    @CheckApiProperty()
-    pageFrom?: number;
+    @CheckApiProperty({ required: true })
+    pageFrom: number;
 
-    @CheckApiProperty()
-    pageTo?: number;
+    @CheckApiProperty({ required: true })
+    pageTo: number;
 }
 

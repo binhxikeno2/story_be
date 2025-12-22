@@ -5,16 +5,36 @@ import { Seeder } from 'typeorm-extension';
 
 export class Category1765380100000 implements Seeder {
     private categories = [
-        { name: 'Technology', slug: 'technology', description: 'Latest tech news and reviews' },
-        { name: 'Science', slug: 'science', description: 'Discoveries and innovations' },
-        { name: 'Travel', slug: 'travel', description: 'Explore the world' },
-        { name: 'Food', slug: 'food', description: 'Delicious recipes and dining' },
-        { name: 'Lifestyle', slug: 'lifestyle', description: 'Living your best life' },
-        { name: 'Business', slug: 'business', description: 'Market insights and trends' },
-        { name: 'Entertainment', slug: 'entertainment', description: 'Movies, music, and more' },
-        { name: 'Sports', slug: 'sports', description: 'Scores, teams, and athletes' },
-        { name: 'Health', slug: 'health', description: 'Wellness and fitness' },
-        { name: 'Education', slug: 'education', description: 'Learning and growth' },
+        {
+            name: '一般漫画',
+            slug: 'ippan-manga',
+            description: 'Manga thông thường',
+            url3thParty: 'https://x3dl.net/wp/category/ippan-manga/',
+        },
+        {
+            name: '少女漫画',
+            slug: 'shoujo-manga',
+            description: 'Manga dành cho thiếu nữ',
+            url3thParty: 'https://x3dl.net/wp/category/shoujo-manga/',
+        },
+        {
+            name: 'ライトノベル',
+            slug: 'light-novel',
+            description: 'Light Novel',
+            url3thParty: 'https://x3dl.net/wp/category/light-novel/',
+        },
+        {
+            name: '成年漫画',
+            slug: 'seinen-manga',
+            description: 'Manga dành cho người lớn',
+            url3thParty: 'https://x3dl.net/wp/category/seinen-manga/',
+        },
+        {
+            name: 'やおい漫画',
+            slug: 'yaoi-manga',
+            description: 'Yaoi Manga',
+            url3thParty: 'https://x3dl.net/wp/category/yaoi-manga/',
+        },
     ];
 
     public async run(dataSource: DataSource): Promise<void> {

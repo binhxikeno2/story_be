@@ -1,13 +1,8 @@
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
+import { CrawlStatus } from '../../shared/constants/crawl.constant';
 import { BaseEntity } from './base.entity';
 import { CategoryEntity } from './category.entity';
-
-export enum CrawlStatus {
-    IN_PROGRESS = 'inprogress',
-    CRAWLED = 'crawled',
-    ERROR = 'error',
-}
 
 @Entity('crawl_process')
 export class CrawlProcessEntity extends BaseEntity {
@@ -30,6 +25,18 @@ export class CrawlProcessEntity extends BaseEntity {
         nullable: true,
     })
     public limitTime: number;
+
+    @Column({
+        type: 'bigint',
+        name: 'page_from',
+    })
+    public pageFrom: number;
+
+    @Column({
+        type: 'bigint',
+        name: 'page_to',
+    })
+    public pageTo: number;
 
     @Column({
         type: 'timestamp',

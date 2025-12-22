@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose, Transform, Type } from 'class-transformer';
-import { CrawlStatus } from 'database/entities/crawlProcess.entity';
+import { CrawlStatus } from 'shared/constants/crawl.constant';
 import { convertDataToInstance, HasIdResDto, Pagination } from 'shared/dto/response.dto';
 
 export class CrawlProcessResDto extends HasIdResDto {

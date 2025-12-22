@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CrawlProcessEntity } from 'database/entities';
+import { CrawlProcessEntity, CrawlProcessPageEntity } from 'database/entities';
 import { CategoryRepository } from 'database/repositories/category.repository';
 import { CrawlProcessRepository } from 'database/repositories/crawlProcess.repository';
+import { CrawlProcessPageRepository } from 'database/repositories/crawlProcessPage.repository';
 import { MessageCode } from 'shared/constants/app.constant';
 import { ApiBadRequestException } from 'shared/types';
 
@@ -12,6 +13,7 @@ export class CrawlProcessService {
     constructor(
         private crawlProcessRepository: CrawlProcessRepository,
         private categoryRepository: CategoryRepository,
+        private crawlProcessPageRepository: CrawlProcessPageRepository,
     ) { }
 
     public async getActiveProcess(): Promise<CrawlProcessEntity | null> {
@@ -31,7 +33,30 @@ export class CrawlProcessService {
             throw new ApiBadRequestException(MessageCode.crawlInProgress, 'A crawl process is already running');
         }
 
-        await this.crawlProcessRepository.createCrawlProcess(category);
+        if (body.pageFrom < 1 || body.pageTo < 1 || body.pageFrom > body.pageTo) {
+            throw new ApiBadRequestException(MessageCode.invalidInput, 'Invalid page range');
+        }
+
+        const crawlProcess = await this.crawlProcessRepository.createCrawlProcess(
+            category,
+            body.pageFrom,
+            body.pageTo,
+        );
+
+        // Create CrawlProcessPageEntity for each pageNo in range
+        const baseUrl = category.url3thParty || '';
+        const crawlProcessPages: Partial<CrawlProcessPageEntity>[] = [];
+
+        for (let pageNo = body.pageFrom; pageNo <= body.pageTo; pageNo++) {
+            const url = baseUrl ? `${baseUrl}?page=${pageNo}` : '';
+            crawlProcessPages.push({
+                processId: crawlProcess.id,
+                pageNo,
+                url,
+            });
+        }
+
+        await this.crawlProcessPageRepository.bulkSave(crawlProcessPages);
     }
 }
 
