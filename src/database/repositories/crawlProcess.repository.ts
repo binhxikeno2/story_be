@@ -37,6 +37,13 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
         return !!process;
     }
 
+    public async findById(id: number): Promise<CrawlProcessEntity | null> {
+        return this.findOne({
+            where: { id },
+            relations: ['category'],
+        });
+    }
+
     public async createCrawlProcess(
         category: CategoryEntity,
         pageFrom: number,

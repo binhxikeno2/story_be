@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { PersonalTokenEntity } from 'database/entities';
 import { DataSource } from 'typeorm';
 
 import { BaseRepository } from './base.repository';
-import { PersonalTokenEntity } from 'database/entities';
 
 @Injectable()
 export class PersonalTokenRepository extends BaseRepository<PersonalTokenEntity> {

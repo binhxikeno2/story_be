@@ -1,7 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 import { CrawlStatus } from '../../shared/constants/crawl.constant';
-
 import { BaseEntity } from './base.entity';
 import { CrawlProcessEntity } from './crawlProcess.entity';
 
