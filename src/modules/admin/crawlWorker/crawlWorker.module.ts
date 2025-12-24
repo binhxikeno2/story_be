@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { CrawlProcessRepository } from 'database/repositories/crawlProcess.repository';
 import { CrawlProcessItemRepository } from 'database/repositories/crawlProcessItem.repository';
 import { CrawlProcessPageRepository } from 'database/repositories/crawlProcessPage.repository';
+import { PostRepository } from 'database/repositories/post.repository';
 
 import { CrawlProcessModule } from '../crawlProcess/crawlProcess.module';
 import { CrawlProcessWorker } from './crawlWorker.worker';
@@ -16,6 +17,7 @@ import { PageCrawler } from './pageCrawler.service';
         CrawlProcessRepository,
         CrawlProcessPageRepository,
         CrawlProcessItemRepository,
+        PostRepository,
         PageCrawler,
         DetailCrawler,
     ],

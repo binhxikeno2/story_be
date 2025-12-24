@@ -26,7 +26,6 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
             where: {
                 status: In([
                     CrawlStatus.CREATED,
-                    CrawlStatus.RUNNING,
                     CrawlStatus.RUNNING_PAGE,
                     CrawlStatus.RUNNING_DETAIL,
                     CrawlStatus.FINALIZING,

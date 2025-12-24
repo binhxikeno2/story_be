@@ -8,6 +8,7 @@ import { MessageCode } from 'shared/constants/app.constant';
 import { CrawlStatus } from 'shared/constants/crawl.constant';
 import { logger } from 'shared/logger/app.logger';
 import { ApiBadRequestException } from 'shared/types';
+import { In } from 'typeorm';
 
 import { CrawlProcessWorker } from '../crawlWorker/crawlWorker.worker';
 import { DetailCrawler } from '../crawlWorker/detailCrawler.service';
@@ -39,10 +40,9 @@ export class CrawlProcessService {
         }
 
         const hasInProgressProcess = await this.crawlProcessRepository.checkInProgressProcess();
-
-        // if (hasInProgressProcess) {
-        //     throw new ApiBadRequestException(MessageCode.crawlInProgress, 'A crawl process is already running');
-        // }
+        if (hasInProgressProcess) {
+            throw new ApiBadRequestException(MessageCode.crawlInProgress, 'A crawl process is already running');
+        }
 
         if (body.pageFrom < 1 || body.pageTo < 1 || body.pageFrom > body.pageTo) {
             throw new ApiBadRequestException(MessageCode.invalidInput, 'Invalid page range');
@@ -59,7 +59,14 @@ export class CrawlProcessService {
         const crawlProcessPages: Partial<CrawlProcessPageEntity>[] = [];
 
         for (let pageNo = body.pageFrom; pageNo <= body.pageTo; pageNo++) {
-            const url = baseUrl ? `${baseUrl}?page=${pageNo}` : '';
+            let url = '';
+
+            if (baseUrl) {
+                // Remove trailing slash and append /page/{pageNo}
+                const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+                url = `${cleanBaseUrl}/page/${pageNo}`;
+            }
+
             crawlProcessPages.push({
                 processId: crawlProcess.id,
                 pageNo,
@@ -87,13 +94,28 @@ export class CrawlProcessService {
         }
 
         // Phase 2: Crawl DETAIL
-        // if (process.status === CrawlStatus.RUNNING_DETAIL) {
-        //     return await this.processDetailPhase(process);
-        // }
+        if (process.status === CrawlStatus.RUNNING_DETAIL) {
+            return await this.processDetailPhase(process);
+        }
 
         // Process completed or error
         if ([CrawlStatus.CRAWLED, CrawlStatus.ERROR, CrawlStatus.CANCELLED].includes(process.status)) {
-            logger.info(`[Service] Process ${processId} completed with status: ${process.status}`);
+            // Get final stats
+            const donePages = await this.crawlProcessPageRepository.count({
+                where: { processId, status: CrawlStatus.DONE },
+            });
+
+            // Count items by joining with pages
+            const pages = await this.crawlProcessPageRepository.find({
+                where: { processId },
+                select: ['id'],
+            });
+            const pageIds = pages.map(p => p.id);
+            const doneItems = pageIds.length > 0 ? await this.crawlProcessItemRepository.count({
+                where: { processPageId: In(pageIds), status: CrawlStatus.DONE },
+            }) : 0;
+
+            logger.info(`[CrawlProcess] ✅ Process ${processId} completed: ${donePages} pages, ${doneItems} details`);
 
             return false;
         }
@@ -115,11 +137,16 @@ export class CrawlProcessService {
         // Check if there are any pending pages
         const hasPendingPages = await this.hasPendingPages(process.id);
         if (!hasPendingPages) {
+            // Get total pages crawled
+            const totalPages = await this.crawlProcessPageRepository.count({
+                where: { processId: process.id, status: CrawlStatus.DONE },
+            });
+            logger.info(`[CrawlProcess] 📄 Process ${process.id}: ${totalPages} pages crawled`);
+
             // Move to detail phase
             await this.crawlProcessRepository.update(process.id, {
                 status: CrawlStatus.RUNNING_DETAIL,
             });
-            logger.info(`[Service] Process ${process.id} moved to DETAIL phase`);
         }
 
         return true;
@@ -132,12 +159,28 @@ export class CrawlProcessService {
         // Check if there are any pending items
         const hasPendingItems = await this.hasPendingItems(process.id);
         if (!hasPendingItems) {
+            // Get final stats
+            const totalPages = await this.crawlProcessPageRepository.count({
+                where: { processId: process.id, status: CrawlStatus.DONE },
+            });
+
+            // Count items by joining with pages
+            const pages = await this.crawlProcessPageRepository.find({
+                where: { processId: process.id },
+                select: ['id'],
+            });
+            const pageIds = pages.map(p => p.id);
+            const totalDetails = pageIds.length > 0 ? await this.crawlProcessItemRepository.count({
+                where: { processPageId: In(pageIds), status: CrawlStatus.DONE },
+            }) : 0;
+
             // Complete
             await this.crawlProcessRepository.update(process.id, {
                 status: CrawlStatus.CRAWLED,
                 endedProcessAt: new Date(),
             });
-            logger.info(`[Service] Process ${process.id} completed`);
+
+            logger.info(`[CrawlProcess] ✅ Process ${process.id} completed: ${totalPages} pages, ${totalDetails} details`);
 
             return false;
         }
@@ -146,7 +189,24 @@ export class CrawlProcessService {
     }
 
     async markAsError(processId: number, error: Error): Promise<void> {
-        logger.error(`[Service] Marking process ${processId} as ERROR:`, error);
+        logger.error(`[CrawlProcess] ❌ Process ${processId} error:`, error);
+
+        // Count pages and items crawled before error
+        const donePages = await this.crawlProcessPageRepository.count({
+            where: { processId, status: CrawlStatus.DONE },
+        });
+
+        const pages = await this.crawlProcessPageRepository.find({
+            where: { processId },
+            select: ['id'],
+        });
+        const pageIds = pages.map(p => p.id);
+        const doneItems = pageIds.length > 0 ? await this.crawlProcessItemRepository.count({
+            where: { processPageId: In(pageIds), status: CrawlStatus.DONE },
+        }) : 0;
+
+        logger.info(`[CrawlProcess] 📊 Process ${processId} before error: ${donePages} pages, ${doneItems} details`);
+
         await this.crawlProcessRepository.update(processId, {
             status: CrawlStatus.ERROR,
         });

@@ -9,7 +9,7 @@ export class Category1765380100000 implements Seeder {
             name: '一般漫画',
             slug: 'ippan-manga',
             description: 'Manga thông thường',
-            url3thParty: 'https://x3dl.net/wp/category/ippan-manga/',
+            url3thParty: 'https://x3dl.net/wp/category/manga/normal-manga',
         },
         {
             name: '少女漫画',

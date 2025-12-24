@@ -6,6 +6,7 @@ import { CrawlProcessPageRepository } from 'database/repositories/crawlProcessPa
 import { CrawlStatus } from 'shared/constants/crawl.constant';
 import { logger } from 'shared/logger/app.logger';
 import { getCrawlHeaders } from 'shared/utils/crawlHeaders.util';
+import { CrawlLogger } from 'shared/utils/crawlLogger.util';
 
 @Injectable()
 export class PageCrawler {
@@ -20,9 +21,13 @@ export class PageCrawler {
         const pages = await this.crawlProcessPageRepository.findPendingPages(process.id, 5);
 
         if (pages.length === 0) {
-            logger.info(`[PageCrawler] All pages completed for process: ${process.id}`);
-
             return;
+        }
+
+        // Log start process if this is the first run (status is CREATED)
+        if (process.status === CrawlStatus.CREATED) {
+            const totalPages = process.pageTo - process.pageFrom + 1;
+            logger.info(`[CrawlProcess] 🚀 Starting process ${process.id}: (total: ${totalPages} pages)`);
         }
 
         for (const page of pages) {
@@ -30,7 +35,7 @@ export class PageCrawler {
                 await this.crawlPage(page, process);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : String(error);
-                logger.error(`[PageCrawler] Error crawling page ${page.id}:`, errorMessage);
+                CrawlLogger.pageError(page.id, errorMessage);
 
                 // Mark as failed but continue with other pages
                 await this.crawlProcessPageRepository.update(page.id, {
@@ -38,18 +43,11 @@ export class PageCrawler {
                     lastError: errorMessage.substring(0, 1000),
                     endedAt: new Date(),
                 });
-
-                // If Cloudflare 403, log warning but continue
-                if (errorMessage.includes('403') || errorMessage.includes('Cloudflare')) {
-                    logger.warn(`[PageCrawler] Skipping page ${page.id} due to Cloudflare protection, continuing with other pages...`);
-                }
             }
         }
     }
 
     private async crawlPage(page: CrawlProcessPageEntity, process: CrawlProcessEntity): Promise<void> {
-        logger.info(`[PageCrawler] Crawling page ${page.pageNo} of process ${process.id}: ${page.url}`);
-
         // Update status
         await this.crawlProcessPageRepository.update(page.id, {
             status: CrawlStatus.RUNNING,
@@ -66,10 +64,6 @@ export class PageCrawler {
                 try {
                     // Add random delay to avoid rate limiting
                     const delay = attempt === 1 ? 2000 + Math.random() * 3000 : 5000 * attempt;
-                    if (attempt > 1) {
-                        logger.info(`[PageCrawler] Retry attempt ${attempt}/${maxRetries}, waiting ${Math.round(delay)}ms...`);
-                    }
-
                     await this.sleep(delay);
 
                     // Get headers from common utility
@@ -82,12 +76,19 @@ export class PageCrawler {
                     // Small random delay to mimic human behavior
                     await this.sleep(Math.random() * 500);
 
+                    logger.info(`[PageCrawler] Fetching page ${page.pageNo}: ${page.url}`);
+
                     const response = await fetch(page.url, {
                         headers,
                         method: 'GET',
                         redirect: 'follow',
                         credentials: 'include',
                     });
+
+                    // Log actual response URL (in case of redirect)
+                    if (response.url !== page.url) {
+                        logger.warn(`[PageCrawler] Page ${page.pageNo} redirected from ${page.url} to ${response.url}`);
+                    }
 
                     // Extract cookies from Set-Cookie headers for retry
                     const setCookieHeaders: string[] = [];
@@ -145,13 +146,11 @@ export class PageCrawler {
                             lastError = new Error(`403 Forbidden: ${isCloudflare ? 'Cloudflare/Bot protection' : 'Access denied'}`);
 
                             if (attempt < maxRetries) {
-                                logger.warn(`[PageCrawler] 403 error on attempt ${attempt}, retrying...`);
                                 await this.sleep(10000 + Math.random() * 10000);
                                 continue;
                             }
 
                             // After all retries failed, skip this page
-                            logger.error(`[PageCrawler] Cloudflare protection detected after ${maxRetries} attempts, skipping page ${page.id}`);
                             await this.crawlProcessPageRepository.update(page.id, {
                                 status: CrawlStatus.FAILED,
                                 lastError: lastError.message,
@@ -174,15 +173,14 @@ export class PageCrawler {
 
                     // Check if HTML looks valid
                     if (!html.includes('<html') && !html.includes('<!DOCTYPE') && !html.includes('<article')) {
-                        const contentEncoding = response.headers.get('content-encoding');
-                        logger.warn(`[PageCrawler] Response may not be valid HTML, content-encoding: ${contentEncoding || 'none'}`);
-                        logger.warn(`[PageCrawler] First 500 chars: ${html.substring(0, 500)}`);
+                        throw new Error('Invalid HTML response');
                     }
 
-                    logger.info(`[PageCrawler] Fetched HTML successfully, length: ${html.length} characters`);
                     const baseUrl = process.category?.url3thParty || '';
 
-                    await this.parseAndSaveUrls(html, page, process, baseUrl);
+                    const itemsCount = await this.parseAndSaveUrls(html, page, process, baseUrl);
+
+                    logger.info(`----[PageCrawler]: ${page.pageNo} page crawled: total items found: ${itemsCount}`);
 
                     return;
                 } catch (error) {
@@ -190,7 +188,6 @@ export class PageCrawler {
 
                     // Don't retry if it's 403 Cloudflare (already handled above)
                     if (lastError.message.includes('403') || lastError.message.includes('Cloudflare')) {
-                        logger.error(`[PageCrawler] Cloudflare protection detected, skipping page ${page.id}`);
                         await this.crawlProcessPageRepository.update(page.id, {
                             status: CrawlStatus.FAILED,
                             lastError: lastError.message,
@@ -201,7 +198,6 @@ export class PageCrawler {
                     }
 
                     if (attempt < maxRetries) {
-                        logger.warn(`[PageCrawler] Attempt ${attempt} failed, retrying...`);
                         continue;
                     }
 
@@ -212,7 +208,8 @@ export class PageCrawler {
             // If we get here, all retries failed (non-403 error)
             throw lastError || new Error('Failed after all retries');
         } catch (error) {
-            logger.error(`[PageCrawler] Error crawling page ${page.id}:`, error);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            CrawlLogger.pageError(page.id, errorMessage);
             await this.crawlProcessPageRepository.update(page.id, {
                 status: CrawlStatus.FAILED,
                 lastError: error instanceof Error ? error.message : String(error),
@@ -222,7 +219,7 @@ export class PageCrawler {
         }
     }
 
-    private async parseAndSaveUrls(html: string, page: CrawlProcessPageEntity, process: CrawlProcessEntity, baseUrl: string): Promise<void> {
+    private async parseAndSaveUrls(html: string, page: CrawlProcessPageEntity, process: CrawlProcessEntity, baseUrl: string): Promise<number> {
         // Parse detail URLs from HTML - find posts in <article class="mh-loop-item">
         const detailUrls: string[] = [];
 
@@ -273,11 +270,6 @@ export class PageCrawler {
             }
         }
 
-        logger.info(`[PageCrawler] Parsed ${detailUrls.length} detail URLs`);
-        if (detailUrls.length > 0) {
-            logger.info(`[PageCrawler] Sample URLs: ${detailUrls.slice(0, 5).join(', ')}`);
-        }
-
         // Create items
         let itemsCount = 0;
         if (detailUrls.length > 0) {
@@ -289,7 +281,6 @@ export class PageCrawler {
 
             await this.crawlProcessItemRepository.bulkSave(items);
             itemsCount = items.length;
-            logger.info(`[PageCrawler] Created ${itemsCount} crawl items`);
         }
 
         // Update page status
@@ -299,7 +290,7 @@ export class PageCrawler {
             endedAt: new Date(),
         });
 
-        logger.info(`[PageCrawler] Completed page ${page.pageNo}, found ${itemsCount} items`);
+        return itemsCount;
     }
 
     private sleep(ms: number): Promise<void> {
