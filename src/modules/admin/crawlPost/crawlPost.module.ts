@@ -1,24 +1,25 @@
-import { forwardRef,Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { CategoryRepository } from 'database/repositories/category.repository';
 import { CrawlProcessRepository } from 'database/repositories/crawlProcess.repository';
 import { CrawlProcessItemRepository } from 'database/repositories/crawlProcessItem.repository';
 import { CrawlProcessPageRepository } from 'database/repositories/crawlProcessPage.repository';
+import { WorkerModule } from 'shared/worker/worker.module';
 
-import { CrawlWorkerModule } from '../crawlWorker/crawlWorker.module';
-import { CrawlProcessController } from './crawlProcess.controller';
-import { CrawlProcessService } from './crawlProcess.service';
+import { CrawlPostJobModule } from '../crawlPostJob/crawlPostJob.module';
+import { CrawlPostController } from './crawlPost.controller';
+import { CrawlPostService } from './crawlPost.service';
 
 @Module({
-    imports: [forwardRef(() => CrawlWorkerModule)],
-    controllers: [CrawlProcessController],
+    imports: [forwardRef(() => CrawlPostJobModule), WorkerModule],
+    controllers: [CrawlPostController],
     providers: [
-        CrawlProcessService,
+        CrawlPostService,
         CrawlProcessRepository,
         CategoryRepository,
         CrawlProcessPageRepository,
         CrawlProcessItemRepository,
     ],
-    exports: [CrawlProcessService],
+    exports: [CrawlPostService],
 })
-export class CrawlProcessModule {}
+export class CrawlPostModule { }
 

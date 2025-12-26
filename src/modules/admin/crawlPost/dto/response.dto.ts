@@ -3,7 +3,7 @@ import { Expose, Transform, Type } from 'class-transformer';
 import { CrawlStatus } from 'shared/constants/crawl.constant';
 import { convertDataToInstance, HasIdResDto, Pagination } from 'shared/dto/response.dto';
 
-export class CrawlProcessResDto extends HasIdResDto {
+export class CrawlPostResDto extends HasIdResDto {
     @ApiProperty()
     @Expose()
     name: string;
@@ -29,14 +29,14 @@ export class CrawlProcessResDto extends HasIdResDto {
     @Expose()
     numberOfPostCrawled: number;
 
-    constructor(data?: Partial<CrawlProcessResDto>) {
+    constructor(data?: Partial<CrawlPostResDto>) {
         super();
         convertDataToInstance(data, this);
     }
 }
 
-export class CrawlProcessListResDto extends Pagination<CrawlProcessResDto[]> {
-    @Type(() => CrawlProcessResDto)
-    items: CrawlProcessResDto[];
+export class CrawlPostListResDto extends Pagination<CrawlPostResDto[]> {
+    @Type(() => CrawlPostResDto)
+    items: CrawlPostResDto[];
 }
 

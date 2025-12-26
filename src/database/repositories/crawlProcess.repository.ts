@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CategoryEntity, CrawlProcessEntity } from 'database/entities';
-import { CRAWL_PROCESS_POSTS_LIMIT } from 'modules/admin/crawlProcess/crawlProcess.constant';
+import { CRAWL_PROCESS_POSTS_LIMIT } from 'modules/admin/crawlPost/constants';
 import { CrawlStatus } from 'shared/constants/crawl.constant';
 import { DataSource, In } from 'typeorm';
 

@@ -1,12 +1,12 @@
 import { ApiBaseGetListQueries } from 'shared/dto/request.dto';
 import { CheckApiProperty } from 'shared/validators/checkProperty.decorator';
 
-export class GetCrawlProcessListReqDto extends ApiBaseGetListQueries {
+export class GetCrawlPostListReqDto extends ApiBaseGetListQueries {
     @CheckApiProperty()
     search?: string;
 }
 
-export class TriggerCrawlProcessReqDto {
+export class TriggerCrawlPostReqDto {
     @CheckApiProperty({ required: true })
     categoryId: number;
 
