@@ -9,6 +9,7 @@ import { WorkerModule } from 'shared/worker/worker.module';
 import { CrawlPostModule } from '../crawlPost/crawlPost.module';
 import { HtmlParserModule } from '../htmlParser/htmlParser.module';
 import { CrawlPostJobWorker } from './crawlPostJob.worker';
+import { CookieFetcherService } from './service/cookieFetcher.service';
 import { CrawlPostJobService } from './service/crawlPostJob.service';
 import { CrawlPostScanner } from './service/crawlPostScanner.service';
 import { DetailCrawler } from './service/detailCrawler.service';
@@ -28,10 +29,11 @@ import { ThirdPartyFetchService } from './service/thirdPartyFetch.service';
         PostRepository,
         ProcessStatusService,
         ThirdPartyFetchService,
+        CookieFetcherService,
         PageCrawler,
         DetailCrawler,
     ],
-    exports: [CrawlPostJobWorker, CrawlPostJobService, PageCrawler, DetailCrawler],
+    exports: [CrawlPostJobWorker, CrawlPostJobService, PageCrawler, DetailCrawler, CookieFetcherService],
 })
 export class CrawlPostJobModule { }
 
