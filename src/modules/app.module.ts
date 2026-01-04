@@ -1,15 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AdminModule } from './admin/admin.module';
-import { CategoryModule } from './admin/category/category.module';
-import { CrawlPostModule } from './admin/crawlPost/crawlPost.module';
-import { PostModule } from './admin/post/post.module';
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(), DatabaseModule, AuthModule, AdminModule, PostModule, CategoryModule, CrawlPostModule],
+  imports: [ConfigModule.forRoot(), ScheduleModule.forRoot(), DatabaseModule, AuthModule, AdminModule],
   controllers: [],
   providers: [],
 })

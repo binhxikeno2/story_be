@@ -12,6 +12,7 @@ export enum MessageCode {
   cannotDelete = 'CANNOT_DELETE',
   crawlInProgress = 'CRAWL_INPROGRESS',
   categoryNotFound = 'CATEGORY_NOT_FOUND',
+  rapidgatorErrorSession = 'RAPODGATOR_ERROR_SESSION',
 }
 
 export const Message = {

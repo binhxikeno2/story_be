@@ -43,29 +43,30 @@ export class WorkerManager implements OnModuleInit {
     }
 
     /**
-     * Start a job with a specific worker
+     * Start a job by worker name
      */
-    async startJob(workerName: string, id: number): Promise<void> {
+    async startJob(workerName: string): Promise<void> {
         const worker = this.getWorker(workerName);
 
         if (!worker) {
             throw new Error(`Worker "${workerName}" not found`);
         }
 
-        await worker.start(id);
+        await worker.start();
+        logger.info(`[WorkerManager] Started job for worker "${workerName}"`);
     }
 
     /**
-     * Check if a job is running in a specific worker
+     * Check if worker is currently running
      */
-    isJobRunning(workerName: string, id: number): boolean {
+    isWorkerRunning(workerName: string): boolean {
         const worker = this.getWorker(workerName);
 
         if (!worker) {
             return false;
         }
 
-        return worker.isRunning(id);
+        return worker.isRunning();
     }
 }
 

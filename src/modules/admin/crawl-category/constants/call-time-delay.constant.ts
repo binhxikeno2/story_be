@@ -1,0 +1,4 @@
+export const CALL_TIME_DELAY_CRAWL_CATEGORY_RANGE = {
+    MIN: 3000,
+    MAX: 6000,
+}

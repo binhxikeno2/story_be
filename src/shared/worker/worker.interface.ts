@@ -8,15 +8,13 @@ export interface IWorker {
     getName(): string;
 
     /**
-     * Start processing a job with given ID
-     * @param id - Job/process ID to start
+     * Start processing a job
      */
-    start(id: number): Promise<void>;
+    start(): Promise<void>;
 
     /**
-     * Check if a job is currently running
-     * @param id - Job/process ID to check
+     * Check if the worker is currently running
      */
-    isRunning(id: number): boolean;
+    isRunning(): boolean;
 }
 

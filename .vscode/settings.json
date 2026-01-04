@@ -26,5 +26,8 @@
     "**/.DS_Store": true
   },
   "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.tsserver.enableTracing": true
+  "typescript.tsserver.enableTracing": true,
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

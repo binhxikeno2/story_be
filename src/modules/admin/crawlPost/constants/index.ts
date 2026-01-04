@@ -1,1 +1,0 @@
-export const CRAWL_PROCESS_POSTS_LIMIT = 60 * 60 * 5; // 5 hours

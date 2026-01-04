@@ -7,20 +7,31 @@ import { ChapterEntity } from './chapter.entity';
 export class StoryEntity extends BaseEntity {
     @Column({
         length: 255,
+        name: 'title',
     })
     public title: string;
 
     @Column({
         length: 500,
+        name: 'media',
     })
     public media: string;
 
     @Column({
+        length: 500,
+        nullable: true,
+        name: 'rapid_gator_url',
+        default: null,
+    })
+    public rapidGatorUrl?: string;
+
+    @Column({
         type: 'bigint',
+        name: 'chapter_id',
     })
     public chapterId: number;
 
     @ManyToOne(() => ChapterEntity, (chapter) => chapter.stories, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'chapterId' })
+    @JoinColumn({ name: 'chapter_id' })
     chapter: ChapterEntity;
 }

@@ -21,11 +21,20 @@ export class CategoryResDto extends HasIdResDto {
 
     @ApiProperty()
     @Expose()
+    url3thParty: string;
+
+    @ApiProperty()
+    @Expose()
     postCount: number;
 
     @ApiProperty()
     @Expose()
     unreadPostCount: number;
+
+    @ApiProperty({ type: [CategoryResDto], required: false })
+    @Expose()
+    @Type(() => CategoryResDto)
+    children?: CategoryResDto[];
 
     constructor(data?: Partial<CategoryResDto>) {
         super();

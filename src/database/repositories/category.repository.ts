@@ -21,13 +21,23 @@ export class CategoryRepository extends BaseRepository<CategoryEntity> {
         const { page, perPage, search } = query;
         const qb = this.getRepository().createQueryBuilder('category');
 
+        qb.leftJoinAndSelect('category.children', 'children');
         qb.loadRelationCountAndMap('category.postCount', 'category.posts');
         qb.loadRelationCountAndMap('category.unreadPostCount', 'category.posts', 'post', (qb) => {
             return qb.where('post.isRead = :isRead', { isRead: false });
         });
 
+        // Load post count for children
+        qb.loadRelationCountAndMap('children.postCount', 'children.posts');
+        qb.loadRelationCountAndMap('children.unreadPostCount', 'children.posts', 'childPost', (qb) => {
+            return qb.where('childPost.isRead = :isRead', { isRead: false });
+        });
+
+        // Only get root categories (no parent)
+        qb.where('category.parentId IS NULL');
+
         if (search) {
-            qb.where('category.name ILIKE :search OR category.description ILIKE :search', { search: `%${search}%` });
+            qb.andWhere('(LOWER(category.name) LIKE LOWER(:search) OR LOWER(category.description) LIKE LOWER(:search))', { search: `%${search}%` });
         }
 
         qb.orderBy('category.createdAt', 'DESC');

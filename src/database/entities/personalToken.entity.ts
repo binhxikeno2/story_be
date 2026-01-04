@@ -6,7 +6,10 @@ import { UserEntity } from './user.entity';
 
 @Entity('personal_token')
 export class PersonalTokenEntity extends BaseEntity {
-  @Column('text')
+  @Column({
+    type: 'text',
+    name: 'token',
+  })
   public token: string;
 
   @Column({

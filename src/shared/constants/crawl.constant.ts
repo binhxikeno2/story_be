@@ -13,5 +13,7 @@ export enum CrawlStatus {
     RUNNING = 'running',
     DONE = 'done',
     FAILED = 'failed',
+    DUPLICATE = 'duplicate',
+    NOT_NEW_PAGE = 'not_new_page',
 }
 

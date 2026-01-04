@@ -12,4 +12,8 @@ export class CategoryService {
     public async getCategoryList(query: GetCategoryListReqDto): Promise<Pagination<CategoryEntity[]>> {
         return this.categoryRepository.getCategoryList(query);
     }
+
+    public async getAllCategories(): Promise<CategoryEntity[]> {
+        return this.categoryRepository.find();
+    }
 }

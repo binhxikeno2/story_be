@@ -18,31 +18,40 @@ const logFormat = printf(({ timestamp, level, message }) => `${timestamp} ${leve
  * Log Level
  * error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6
  */
+// Create transports with increased maxListeners to fix MaxListenersExceededWarning
+const infoTransport = new DailyRotateFile({
+  level: 'info',
+  datePattern: 'YYYY-MM-DD',
+  dirname: logDir + '/info', // log file /logs/info/*.log in save
+  filename: `%DATE%.log`,
+  maxFiles: 30, // 30 Days saved
+  json: false,
+  zippedArchive: true,
+});
+
+const errorTransport = new winston.transports.DailyRotateFile({
+  level: 'error',
+  datePattern: 'YYYY-MM-DD',
+  dirname: logDir + '/error', // log file /logs/error/*.log in save
+  filename: `%DATE%.error.log`,
+  maxFiles: 30, // 30 Days saved
+  handleExceptions: true,
+  json: false,
+  zippedArchive: true,
+});
+
+// Fix MaxListenersExceededWarning by increasing max listeners
+if (infoTransport.setMaxListeners) {
+  infoTransport.setMaxListeners(20);
+}
+
+if (errorTransport.setMaxListeners) {
+  errorTransport.setMaxListeners(20);
+}
+
 const logger = winston.createLogger({
   format: combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
-  transports: [
-    // info log setting
-    new DailyRotateFile({
-      level: 'info',
-      datePattern: 'YYYY-MM-DD',
-      dirname: logDir + '/info', // log file /logs/info/*.log in save
-      filename: `%DATE%.log`,
-      maxFiles: 30, // 30 Days saved
-      json: false,
-      zippedArchive: true,
-    }),
-    // error log setting
-    new winston.transports.DailyRotateFile({
-      level: 'error',
-      datePattern: 'YYYY-MM-DD',
-      dirname: logDir + '/error', // log file /logs/error/*.log in save
-      filename: `%DATE%.error.log`,
-      maxFiles: 30, // 30 Days saved
-      handleExceptions: true,
-      json: false,
-      zippedArchive: true,
-    }),
-  ],
+  transports: [infoTransport, errorTransport],
 });
 
 logger.add(
