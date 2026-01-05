@@ -5,6 +5,7 @@ export * from './crawlCategory.entity';
 export * from './crawlCategoryDetail.entity';
 export * from './crawlCategoryItem.entity';
 export * from './personalToken.entity';
+export * from './playwrightSession.entity';
 export * from './post.entity';
 export * from './story.entity';
 export * from './user.entity';

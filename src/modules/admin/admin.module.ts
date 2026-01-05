@@ -5,11 +5,12 @@ import { CrawlCategoryModule } from './crawl-category/crawl-category.module';
 import { CrawlCategoryDetailModule } from './crawl-category-detail/crawl-category-detail.module';
 import { CrawlMediaModule } from './crawl-media/crawl-media.module';
 import { CrawlPostModule } from './crawl-post/crawl-post.module';
+import { PlaywrightModule } from './playwright/playwright.module';
 import { PostModule } from './post/post.module';
 import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [UserModule, PostModule, CategoryModule, CrawlCategoryModule, CrawlCategoryDetailModule, CrawlPostModule, CrawlMediaModule],
+  imports: [UserModule, PostModule, CategoryModule, CrawlCategoryModule, CrawlCategoryDetailModule, CrawlPostModule, CrawlMediaModule, PlaywrightModule],
   controllers: [],
   providers: [],
 })

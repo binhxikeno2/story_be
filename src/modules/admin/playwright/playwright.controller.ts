@@ -4,14 +4,13 @@ import { ApiAdminController } from 'shared/decorators/apiController.decorator';
 import { ApiBaseOkResponse } from 'shared/decorators/apiDoc.decorator';
 import { WorkerManager } from 'shared/worker/worker.manager';
 
-import { PLAYWRIGHT_WORKER_NAME } from '../playwright/constants/playwright.constant';
-import { CRAWL_MEDIA_WORKER_NAME } from './constants/crawl-media.constant';
+import { PLAYWRIGHT_WORKER_NAME } from './constants/playwright.constant';
 
 @ApiAdminController({
-    name: 'Crawl Media',
+    name: 'Playwright',
     authRequired: true,
 })
-export class CrawlMediaController extends BaseController {
+export class PlaywrightController extends BaseController {
     constructor(
         private readonly workerManager: WorkerManager,
     ) {
@@ -20,14 +19,13 @@ export class CrawlMediaController extends BaseController {
 
     @Post('trigger')
     @ApiBaseOkResponse({})
-    public async triggerCrawlMedia() {
-        await this.workerManager.startJob(PLAYWRIGHT_WORKER_NAME);
-        // this.workerManager.startJob(CRAWL_MEDIA_WORKER_NAME);
+    public async triggerPlaywright() {
+        this.workerManager.startJob(PLAYWRIGHT_WORKER_NAME);
 
         return {
-            message: 'Crawl media process started',
+            message: 'Playwright session started',
             status: 'started',
-            workerName: CRAWL_MEDIA_WORKER_NAME,
+            workerName: PLAYWRIGHT_WORKER_NAME,
         };
     }
 }
