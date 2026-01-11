@@ -6,10 +6,11 @@ import { CrawlCategoryDetailModule } from './crawl-category-detail/crawl-categor
 import { CrawlMediaModule } from './crawl-media/crawl-media.module';
 import { CrawlPostModule } from './crawl-post/crawl-post.module';
 import { PostModule } from './post/post.module';
+import { ScrollJobModule } from './scroll-job/scroll-job.module';
 import { UserModule } from './user/user.module';
 
 @Module({
-  imports: [UserModule, PostModule, CategoryModule, CrawlCategoryModule, CrawlCategoryDetailModule, CrawlPostModule, CrawlMediaModule],
+  imports: [UserModule, PostModule, CategoryModule, CrawlCategoryModule, CrawlCategoryDetailModule, CrawlPostModule, CrawlMediaModule, ScrollJobModule],
   controllers: [],
   providers: [],
 })

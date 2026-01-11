@@ -38,6 +38,7 @@ export class ThirdPartyApiService {
             const requestBody = {
                 cmd: 'request.get',
                 url: url,
+                premiumProxy: true,
                 ...params,
             };
 
@@ -48,7 +49,6 @@ export class ThirdPartyApiService {
                 },
                 body: JSON.stringify(requestBody),
             });
-
 
             const data = await response.json() as ScrappeyApiResponseDto;
 
@@ -75,6 +75,7 @@ export class ThirdPartyApiService {
             };
         }
     }
+
 
     async fetchCurrentUrl(url: string, params?: ScrappeyApiRequestDto): Promise<ThirdPartyApiCurrentUrlResponse> {
         try {

@@ -26,7 +26,7 @@ import { CrawlCategoryWorker } from './workers/crawl-category.worker';
         CrawlCategoryWorker,
         CategoryService
     ],
-    exports: [CrawlCategoryWorker],
+    exports: [CrawlCategoryWorker, CrawlCategoryService],
 })
 export class CrawlCategoryModule {
     constructor(private readonly workerManager: WorkerManager, private readonly crawlCategoryWorker: CrawlCategoryWorker) {

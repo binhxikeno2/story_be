@@ -29,9 +29,9 @@ export class CrawlCategoryRepository extends BaseRepository<CrawlCategoryEntity>
                 'crawl_category_item',
                 'item',
                 'item.process_id = crawlCategory.id AND item.status IN (:...pendingStatuses)',
-                { pendingStatuses: [CrawlStatus.PENDING, CrawlStatus.RUNNING] }
+                { pendingStatuses: [CrawlStatus.PENDING, CrawlStatus.FAILED, CrawlStatus.RUNNING] }
             )
-            .where('crawlCategory.status IN (:...statuses)', { statuses: [CrawlStatus.CREATED, CrawlStatus.RUNNING_DETAIL, CrawlStatus.ERROR] })
+            // .where('crawlCategory.status IN (:...statuses)', { statuses: [CrawlStatus.CREATED, CrawlStatus.RUNNING_DETAIL, CrawlStatus.FAILED] })
             .groupBy('crawlCategory.id')
             .orderBy('crawlCategory.status', 'ASC')
             .addOrderBy('crawlCategory.pageFrom', 'ASC')

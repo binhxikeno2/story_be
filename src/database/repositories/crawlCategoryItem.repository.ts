@@ -15,9 +15,9 @@ export class CrawlCategoryItemRepository extends BaseRepository<CrawlCategoryIte
         return this.getRepository().find({
             where: {
                 processId,
-                status: In([CrawlStatus.PENDING, CrawlStatus.RUNNING])
+                status: In([CrawlStatus.PENDING, CrawlStatus.RUNNING, CrawlStatus.FAILED])
             },
-            order: { pageNo: 'ASC' },
+            order: { status: 'ASC', pageNo: 'ASC' },
         });
     }
 
@@ -25,7 +25,7 @@ export class CrawlCategoryItemRepository extends BaseRepository<CrawlCategoryIte
         const count = await this.getRepository().count({
             where: {
                 processId,
-                status: In([CrawlStatus.PENDING, CrawlStatus.RUNNING])
+                status: In([CrawlStatus.PENDING, CrawlStatus.RUNNING, CrawlStatus.FAILED])
             },
         });
 

@@ -26,7 +26,7 @@ export class CrawlCategoryDetailService {
 
             const crawlCategories = await this.crawlCategoryRepository.findCrawlCategoriesReadyCrawl();
             const failedItems: CrawlCategoryItemEntity[] = [];
-
+            
             for (const [index, crawlCategory] of crawlCategories.entries()) {
                 const itemsFailed = await this.processCategoryItemsOfCategory(crawlCategory.id);
                 failedItems.push(...itemsFailed);
