@@ -1,0 +1,1 @@
+export const THIRD_PARTY_API_URL = 'https://publisher.scrappey.com/api/v1';

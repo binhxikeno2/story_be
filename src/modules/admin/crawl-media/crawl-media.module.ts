@@ -4,6 +4,7 @@ import { StoryRepository } from 'database/repositories/story.repository';
 import { WorkerManager } from 'shared/worker/worker.manager';
 import { WorkerModule } from 'shared/worker/worker.module';
 
+import { RapidGatorDownloadService } from '../shared/services/rapid-gator-download.service';
 import { ThirdPartyApiService } from '../shared/services/third-party-api.service';
 import { CrawlMediaController } from './crawl-media.controller';
 import { CrawlMediaService } from './services/crawl-media.service';
@@ -15,6 +16,7 @@ import { CrawlMediaWorker } from './workers/crawl-media.worker';
     providers: [
         StoryRepository,
         ThirdPartyApiService,
+        RapidGatorDownloadService,
         CrawlMediaService,
         CrawlMediaWorker,
     ],

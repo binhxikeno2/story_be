@@ -38,8 +38,10 @@ export class CrawlCategoryDetailRepository extends BaseRepository<CrawlCategoryD
             .addSelect('process.categoryId', 'categoryId')
             .innerJoin('detail.processPage', 'processPage')
             .innerJoin('processPage.process', 'process')
-            .where('detail.status = :status', { status: CrawlStatus.PENDING })
-            .orderBy('detail.id', 'ASC')
+            .where('detail.status IN (:...statuses)', { statuses: [CrawlStatus.PENDING, CrawlStatus.FAILED] })
+            .orderBy('CASE WHEN detail.status = :pendingStatus THEN 0 ELSE 1 END', 'ASC')
+            .addOrderBy('detail.id', 'ASC')
+            .setParameter('pendingStatus', CrawlStatus.PENDING)
             .getRawMany();
     }
 }

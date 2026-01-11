@@ -2,12 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { ChapterEntity, PostEntity, StoryEntity } from 'database/entities';
 import { CrawlCategoryDetailReadyCrawl, CrawlCategoryDetailRepository } from 'database/repositories/crawlCategoryDetail.repository';
 import { PostRepository } from 'database/repositories/post.repository';
+import { chunk } from 'lodash';
 import { CrawlStatus } from 'shared/constants/crawl.constant';
 import { logger } from 'shared/logger/app.logger';
 
 import { ThirdPartyApiService } from '../../shared/services/third-party-api.service';
-import { randomDelay } from '../../shared/utils/delay.util';
-import { CALL_TIME_DELAY_CRAWL_POST_RANGE } from '../constants/call-time-delay.constant';
 import { parsePostInfoFromHtml, PostInfo } from '../utils/parser-post-info.util';
 
 @Injectable()
@@ -28,14 +27,12 @@ export class CrawlPostService {
                 return;
             }
 
-            for (const [index, detail] of crawlCategoryDetails.entries()) {
-                await this.processCrawlCategoryItem(detail);
+            const CONCURRENT_LIMIT = 20;
+            const batches = chunk(crawlCategoryDetails, CONCURRENT_LIMIT);
 
-                await randomDelay({
-                    min: CALL_TIME_DELAY_CRAWL_POST_RANGE.MIN,
-                    max: CALL_TIME_DELAY_CRAWL_POST_RANGE.MAX,
-                    skipLast: index === crawlCategoryDetails.length - 1,
-                });
+            for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+                const batch = batches[batchIndex];
+                await Promise.all(batch.map((detail) => this.processCrawlCategoryItem(detail)));
             }
 
             logger.info('[CrawlPostWorker] Ended processing crawl post');
@@ -83,12 +80,25 @@ export class CrawlPostService {
 
     private async savePost(postInfo: PostInfo, categoryId?: number): Promise<PostEntity> {
         try {
+            // Validate required fields
+            if (!postInfo.title || postInfo.title.trim() === '') {
+                throw new Error('Title is required and cannot be empty');
+            }
+
+            if (!categoryId) {
+                throw new Error('CategoryId is required and cannot be empty');
+            }
+
+            if (!postInfo.lastUpdated) {
+                throw new Error('LastUpdated is required and cannot be empty');
+            }
+
             const post = new PostEntity();
             post.title = postInfo.title;
             post.description = postInfo.description;
             post.tags = postInfo.tags;
             post.thumbnailUrl = postInfo.thumbnailUrl;
-            post.lastUpdated = postInfo.lastUpdated || new Date();
+            post.lastUpdated = postInfo.lastUpdated;
             post.isRead = postInfo.isRead;
             post.categoryId = categoryId;
 

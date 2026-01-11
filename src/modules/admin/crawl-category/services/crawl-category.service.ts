@@ -139,7 +139,7 @@ export class CrawlCategoryService {
         }
 
         return {
-            pageFrom: pagination.pageFrom - pageFromRecent,
+            pageFrom: (pagination.pageFrom + 1) - pageFromRecent,
             pageTo: (pagination.pageTo + 1) - pageToRecent,
             status: CrawlStatus.CREATED,
             shouldCreateItems: true,
@@ -178,6 +178,7 @@ export class CrawlCategoryService {
 
         const recentCrawlCategory = await this.crawlCategoryRepository.findLastedCrawlCategory(category.id);
         const { html, errorMessage } = await this.thirdPartyApiService.fetchHtml(category.url3thParty);
+
 
         if (errorMessage) {
             return null;

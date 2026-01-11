@@ -26,6 +26,14 @@ export class StoryEntity extends BaseEntity {
     public rapidGatorUrl?: string;
 
     @Column({
+        length: 500,
+        nullable: true,
+        name: 'internal_url',
+        default: null,
+    })
+    public internalUrl?: string;
+
+    @Column({
         type: 'bigint',
         name: 'chapter_id',
     })

@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { StoryEntity } from 'database/entities';
 import { StoryRepository } from 'database/repositories/story.repository';
+import { chunk } from 'lodash';
 import { logger } from 'shared/logger/app.logger';
 
+import { RapidGatorDownloadService } from '../../shared/services/rapid-gator-download.service';
 import { ThirdPartyApiService } from '../../shared/services/third-party-api.service';
-import { randomDelay } from '../../shared/utils/delay.util';
-import { CALL_TIME_DELAY_CRAWL_MEDIA_RANGE } from '../constants/call-time-delay.constant';
-import { parseRapidGatorUrlFromHtml } from '../utils/parser-media.util';
 
 @Injectable()
 export class CrawlMediaService {
     constructor(
         private readonly storyRepository: StoryRepository,
         private readonly thirdPartyApiService: ThirdPartyApiService,
+        private readonly rapidGatorDownloadService: RapidGatorDownloadService,
     ) { }
 
     async onCrawlMedia() {
@@ -27,14 +27,12 @@ export class CrawlMediaService {
                 return;
             }
 
-            for (const [index, story] of stories.entries()) {
-                await this.processStory(story);
+            const CONCURRENT_LIMIT = 10;
+            const batches = chunk(stories, CONCURRENT_LIMIT);
 
-                await randomDelay({
-                    min: CALL_TIME_DELAY_CRAWL_MEDIA_RANGE.MIN,
-                    max: CALL_TIME_DELAY_CRAWL_MEDIA_RANGE.MAX,
-                    skipLast: index === stories.length - 1,
-                });
+            for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+                const batch = batches[batchIndex];
+                await Promise.all(batch.map((story) => this.processStory(story)));
             }
 
             logger.info('[CrawlMediaWorker] Ended processing crawl media');
@@ -48,7 +46,7 @@ export class CrawlMediaService {
         try {
             const mediaUrl = story.media;
 
-            const { html, errorMessage } = await this.thirdPartyApiService.fetchHtml(mediaUrl);
+            const { currentUrl, errorMessage } = await this.thirdPartyApiService.fetchCurrentUrl(mediaUrl);
 
             if (errorMessage) {
                 throw new Error(errorMessage);
@@ -56,17 +54,18 @@ export class CrawlMediaService {
 
             logger.info(`[CrawlMediaService] Story ${story.id} - Original URL: ${mediaUrl}`);
 
-            const rapidGatorUrl = parseRapidGatorUrlFromHtml(html);
-
-            if (!rapidGatorUrl) {
+            if (!currentUrl) {
                 throw new Error('No rapidGatorUrl found');
             }
 
+            const internalUrl = await this.rapidGatorDownloadService.downloadDocument(currentUrl, '/files');
+
             await this.storyRepository.update(story.id, {
-                rapidGatorUrl,
+                rapidGatorUrl: currentUrl,
+                internalUrl: internalUrl,
             });
 
-            logger.info(`[CrawlMediaService] Updated story ${story.id} with rapidGatorUrl is ${rapidGatorUrl}`);
+            logger.info(`[CrawlMediaService] Updated story ${story.id} with rapidGatorUrl is ${currentUrl}`);
         } catch (error) {
             logger.error(`[CrawlMediaService] Error processing story ${story.id}:`, error);
         }
