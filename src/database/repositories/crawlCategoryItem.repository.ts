@@ -17,7 +17,7 @@ export class CrawlCategoryItemRepository extends BaseRepository<CrawlCategoryIte
                 processId,
                 status: In([CrawlStatus.PENDING, CrawlStatus.RUNNING, CrawlStatus.FAILED])
             },
-            order: { status: 'ASC', pageNo: 'ASC' },
+            order: { status: 'DESC', pageNo: 'ASC' },
         });
     }
 

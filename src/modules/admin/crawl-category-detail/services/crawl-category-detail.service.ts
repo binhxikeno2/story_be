@@ -42,6 +42,9 @@ export class CrawlCategoryDetailService {
                 await this.retryFailedItems(failedItems);
             }
 
+            const crawlCategoryIds = crawlCategories.map(cat => cat.id);
+            await this.crawlCategoryRepository.updateCrawlCategoriesStatus(crawlCategoryIds);
+
             logger.info('[CrawlCategoryDetailWorker] Ended processing crawl category details');
         } catch (error) {
             logger.error('[CrawlCategoryDetailWorker] Error in processCrawlCategoryDetail:', error);
@@ -51,11 +54,6 @@ export class CrawlCategoryDetailService {
 
     private async processCategoryItemsOfCategory(crawlCategoryId: number): Promise<CrawlCategoryItemEntity[]> {
         const crawlCategoryItems = await this.crawlCategoryItemRepository.findCrawlCategoryItemsReadyCrawl(crawlCategoryId);
-
-        await this.updateCrawlCategoryStatus({
-            crawlCategoryId: crawlCategoryId,
-            status: crawlCategoryItems.length > 0 ? CrawlStatus.RUNNING_DETAIL : CrawlStatus.CRAWLED
-        });
 
         if (!crawlCategoryItems.length) {
             return [];
@@ -70,32 +68,11 @@ export class CrawlCategoryDetailService {
             }
         }
 
-        const hasRemainingItems = await this.crawlCategoryItemRepository.hasPendingOrRunningItems(crawlCategoryId);
-        if (!hasRemainingItems) {
-            await this.updateCrawlCategoryStatus({
-                crawlCategoryId: crawlCategoryId,
-                status: CrawlStatus.CRAWLED
-            });
-        }
-
         return failedItems;
-    }
-
-    private async updateCrawlCategoryStatus({ crawlCategoryId, status }: { crawlCategoryId: number, status: CrawlStatus }): Promise<void> {
-        await this.crawlCategoryRepository.save({
-            id: crawlCategoryId,
-            status: status
-        });
     }
 
     private async processCrawlCategoryItem(item: CrawlCategoryItemEntity): Promise<boolean> {
         try {
-            await this.updateItemStatus({
-                itemId: item.id,
-                status: CrawlStatus.RUNNING,
-                startedAt: new Date(),
-            });
-
             const { html, errorMessage } = await this.thirdPartyApiService.fetchHtml(item.url);
 
             if (errorMessage) {

@@ -31,10 +31,56 @@ export class CrawlCategoryRepository extends BaseRepository<CrawlCategoryEntity>
                 'item.process_id = crawlCategory.id AND item.status IN (:...pendingStatuses)',
                 { pendingStatuses: [CrawlStatus.PENDING, CrawlStatus.FAILED, CrawlStatus.RUNNING] }
             )
-            // .where('crawlCategory.status IN (:...statuses)', { statuses: [CrawlStatus.CREATED, CrawlStatus.RUNNING_DETAIL, CrawlStatus.FAILED] })
             .groupBy('crawlCategory.id')
             .orderBy('crawlCategory.status', 'ASC')
             .addOrderBy('crawlCategory.pageFrom', 'ASC')
             .getMany();
+    }
+
+    public async updateCrawlCategoriesStatus(crawlCategoryIds: number[]): Promise<void> {
+        if (crawlCategoryIds.length === 0) {
+            return;
+        }
+
+        await this.updateFailedCrawlCategoriesStatus(crawlCategoryIds);
+        await this.updateCompletedCrawlCategoriesStatus(crawlCategoryIds);
+    }
+
+    private async updateFailedCrawlCategoriesStatus(crawlCategoryIds: number[]): Promise<void> {
+        // Update status to FAILED if has any FAILED items
+        await this.getRepository()
+            .createQueryBuilder('crawl_category')
+            .update(CrawlCategoryEntity)
+            .set({ status: CrawlStatus.FAILED })
+            .where('crawl_category.id IN (:...ids)', { ids: crawlCategoryIds })
+            .andWhere(
+                `EXISTS (
+                    SELECT 1 
+                    FROM crawl_category_item item 
+                    WHERE item.process_id = crawl_category.id 
+                    AND item.status = :failedStatus
+                )`,
+                { failedStatus: CrawlStatus.FAILED }
+            )
+            .execute();
+    }
+
+    private async updateCompletedCrawlCategoriesStatus(crawlCategoryIds: number[]): Promise<void> {
+        // Update status to DONE if all items are DONE (no FAILED items)
+        await this.getRepository()
+            .createQueryBuilder('crawl_category')
+            .update(CrawlCategoryEntity)
+            .set({ status: CrawlStatus.DONE })
+            .where('crawl_category.id IN (:...ids)', { ids: crawlCategoryIds })
+            .andWhere(
+                `NOT EXISTS (
+                    SELECT 1 
+                    FROM crawl_category_item item 
+                    WHERE item.process_id = crawl_category.id 
+                    AND item.status = :failedStatus
+                )`,
+                { failedStatus: CrawlStatus.FAILED }
+            )
+            .execute();
     }
 }
