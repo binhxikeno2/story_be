@@ -17,7 +17,7 @@ type PayloadToken = {
 
 @Injectable()
 export class AuthService {
-  constructor(private userRepository: UserRepository, private personalTokenRepository: PersonalTokenRepository) { }
+  constructor(private userRepository: UserRepository, private personalTokenRepository: PersonalTokenRepository) {}
 
   async signToken(user: UserEntity): Promise<LoginResDto> {
     const accessToken = signData<PayloadToken>({ id: user.id, email: user.email }, TimeConfig.accessToken);
@@ -67,7 +67,6 @@ export class AuthService {
 
       const personalToken = await this.personalTokenRepository.getPersonalTokenUser(refreshToken, checkToken.id);
 
-
       if (!personalToken?.isValidToken() || !personalToken?.user) {
         throw new ApiBadRequestException(MessageCode.invalidToken);
       }
@@ -77,13 +76,11 @@ export class AuthService {
         TimeConfig.accessToken,
       );
 
-
       return {
         accessToken,
         refreshToken: personalToken.token,
       };
     } catch (ex) {
-      console.log(ex, 'error----')
       throw new ApiUnauthorizedException(MessageCode.expiredToken);
     }
   }

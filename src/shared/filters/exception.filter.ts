@@ -31,7 +31,6 @@ export class ExceptionFilter extends BaseExceptionFilter {
   }
 
   private getHttpResponse(exception?: unknown) {
-    console.log(exception);
     if (exception instanceof ApiException) {
       return this.apiExceptionResponse(exception);
     }
