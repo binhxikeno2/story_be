@@ -25,9 +25,9 @@ export class ScrollJobScheduler {
     //     await this.workerManager.startJob(CRAWL_CATEGORY_WORKER_NAME);
     // }
 
-    @Cron('00 30 03 * * *') // 1:00 AM daily
-    async handleScrollJobCategoryDetail(): Promise<void> {
-        await this.workerManager.startJob(CRAWL_CATEGORY_DETAIL_WORKER_NAME);
-    }
+    // @Cron('00 30 03 * * *') // 3:30 AM daily
+    // async handleScrollJobCategoryDetail(): Promise<void> {
+    //     await this.workerManager.startJob(CRAWL_CATEGORY_DETAIL_WORKER_NAME);
+    // }
 }
 
