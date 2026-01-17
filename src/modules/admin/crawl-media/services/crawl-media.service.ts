@@ -9,66 +9,65 @@ import { ThirdPartyApiService } from '../../shared/services/third-party-api.serv
 
 @Injectable()
 export class CrawlMediaService {
-    constructor(
-        private readonly storyRepository: StoryRepository,
-        private readonly thirdPartyApiService: ThirdPartyApiService,
-        private readonly rapidGatorDownloadService: RapidGatorDownloadService,
-    ) { }
+  constructor(
+    private readonly storyRepository: StoryRepository,
+    private readonly thirdPartyApiService: ThirdPartyApiService,
+    private readonly rapidGatorDownloadService: RapidGatorDownloadService,
+  ) {}
 
-    async onCrawlMedia() {
-        try {
-            logger.info('[CrawlMediaWorker] Starting to process crawl media');
+  async onCrawlMedia() {
+    try {
+      logger.info('[CrawlMediaWorker] Starting to process crawl media');
 
-            const stories = await this.storyRepository.findStoriesReadyCrawlMedia();
+      const stories = await this.storyRepository.findStoriesReadyCrawlMedia();
 
-            if (!stories.length) {
-                logger.info('[CrawlMediaWorker] No stories to process');
+      if (!stories.length) {
+        logger.info('[CrawlMediaWorker] No stories to process');
 
-                return;
-            }
+        return;
+      }
 
-            const CONCURRENT_LIMIT = 10;
-            const batches = chunk(stories, CONCURRENT_LIMIT);
+      const CONCURRENT_LIMIT = 10;
+      const batches = chunk(stories, CONCURRENT_LIMIT);
 
-            for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-                const batch = batches[batchIndex];
-                await Promise.all(batch.map((story) => this.processStory(story)));
-            }
+      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+        const batch = batches[batchIndex];
+        await Promise.all(batch.map((story) => this.processStory(story)));
+      }
 
-            logger.info('[CrawlMediaWorker] Ended processing crawl media');
-        } catch (error) {
-            logger.error('[CrawlMediaWorker] Error in onCrawlMedia:', error);
-            throw error;
-        }
+      logger.info('[CrawlMediaWorker] Ended processing crawl media');
+    } catch (error) {
+      logger.error('[CrawlMediaWorker] Error in onCrawlMedia:', error);
+      throw error;
     }
+  }
 
-    private async processStory(story: StoryEntity) {
-        try {
-            const mediaUrl = story.media;
+  private async processStory(story: StoryEntity) {
+    try {
+      const mediaUrl = story.media;
 
-            const { currentUrl, errorMessage } = await this.thirdPartyApiService.fetchCurrentUrl(mediaUrl);
+      const { currentUrl, errorMessage } = await this.thirdPartyApiService.fetchCurrentUrl(mediaUrl);
 
-            if (errorMessage) {
-                throw new Error(errorMessage);
-            }
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
 
-            logger.info(`[CrawlMediaService] Story ${story.id} - Original URL: ${mediaUrl}`);
+      logger.info(`[CrawlMediaService] Story ${story.id} - Original URL: ${mediaUrl}`);
 
-            if (!currentUrl) {
-                throw new Error('No rapidGatorUrl found');
-            }
+      if (!currentUrl) {
+        throw new Error('No rapidGatorUrl found');
+      }
 
-            const internalUrl = await this.rapidGatorDownloadService.downloadDocument(currentUrl, '/files');
+      const internalUrl = await this.rapidGatorDownloadService.downloadDocument(currentUrl);
 
-            await this.storyRepository.update(story.id, {
-                rapidGatorUrl: currentUrl,
-                internalUrl: internalUrl,
-            });
+      await this.storyRepository.update(story.id, {
+        rapidGatorUrl: currentUrl,
+        internalUrl: internalUrl,
+      });
 
-            logger.info(`[CrawlMediaService] Updated story ${story.id} with rapidGatorUrl is ${currentUrl}`);
-        } catch (error) {
-            logger.error(`[CrawlMediaService] Error processing story ${story.id}:`, error);
-        }
+      logger.info(`[CrawlMediaService] Updated story ${story.id} with rapidGatorUrl is ${currentUrl}`);
+    } catch (error) {
+      logger.error(`[CrawlMediaService] Error processing story ${story.id}:`, error);
     }
+  }
 }
-
