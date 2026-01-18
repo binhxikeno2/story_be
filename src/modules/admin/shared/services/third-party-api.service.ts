@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
+import { logger } from 'shared/logger/app.logger';
 
 import { THIRD_PARTY_API_URL } from '../constants/third-party-api.constant';
 import { ScrappeyApiRequestDto } from '../dto/scrappey-api.request';
@@ -22,32 +23,46 @@ export class ThirdPartyApiService {
   }
 
   async fetchHtml(url: string): Promise<ThirdPartyApiResponseDto> {
-    const params = new ScrappeyApiRequestDto({
-      cmd: 'request.get',
-      url: url,
-      premiumProxy: true,
-    });
+    try {
+      const params = new ScrappeyApiRequestDto({
+        cmd: 'request.get',
+        url: url,
+        premiumProxy: true,
+      });
 
-    const response = await fetch(`${THIRD_PARTY_API_URL}?key=${this.apiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: params.toJson(),
-    });
+      const response = await fetch(`${THIRD_PARTY_API_URL}?key=${this.apiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: params.toJson(),
+      });
 
-    const data = await response.json();
-    const dataTransformed = plainToInstance(ScrappeyApiResponseDto, data);
+      const data = await response.json();
+      const dataTransformed = plainToInstance(ScrappeyApiResponseDto, data);
 
-    if (!dataTransformed?.solution?.verified) {
-      throw new Error(`Third party API returned an error: ${dataTransformed?.solution?.statusCode}`);
+      if (!dataTransformed?.solution?.verified) {
+        throw new Error(`Third party API returned an error: ${dataTransformed?.solution?.statusCode}`);
+      }
+
+      const dataConverted = dataTransformed?.solution;
+      const html = dataConverted?.response;
+
+      if (!html) {
+        throw new Error(`Third party API not found response`);
+      }
+
+      return {
+        html,
+        currentUrl: dataConverted?.currentUrl || '',
+      };
+    } catch (error) {
+      logger.error(`[ThirdPartyApiService] Error fetching HTML: ${error}`);
+
+      return {
+        html: '',
+        currentUrl: '',
+      };
     }
-
-    const dataConverted = dataTransformed?.solution;
-
-    return {
-      html: dataConverted.response,
-      currentUrl: dataConverted.currentUrl,
-    };
   }
 }

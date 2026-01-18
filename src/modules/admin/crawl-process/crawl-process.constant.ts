@@ -1,0 +1,5 @@
+export const CRAWL_PROCESS_WORKER_NAME = 'CRAWL_PROCESS_WORKER';
+
+export const PAGE_TO_DEFAULT = 2500;
+
+export const CONCURRENCY = 5;

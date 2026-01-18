@@ -5,11 +5,11 @@ import { convertDataToInstance } from 'shared/dto/response.dto';
 export class ThirdPartyApiResponseDto {
   @ApiProperty()
   @Expose()
-  html?: string;
+  html: string;
 
   @ApiProperty()
   @Expose()
-  currentUrl?: string;
+  currentUrl: string;
 
   constructor(data?: Partial<ThirdPartyApiResponseDto>) {
     convertDataToInstance(data, this);

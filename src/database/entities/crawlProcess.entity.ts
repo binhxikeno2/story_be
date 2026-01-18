@@ -4,6 +4,7 @@ import { BaseEntity } from './base.entity';
 import { CrawlProcessDetailEntity } from './crawlProcessDetail.entity';
 
 export enum CrawlProcessStatus {
+  CREATED = 'created',
   RUNNING = 'running',
   DONE = 'done',
   FAILED = 'failed',
