@@ -1,4 +1,8 @@
 FROM node:18-alpine
+
+# Install yarn if not available
+RUN apk add --no-cache yarn || npm install -g yarn
+
 WORKDIR /src
 
 # Copy package files
@@ -14,10 +18,11 @@ COPY . .
 RUN yarn build
 
 # Create logs directory with proper permissions
-RUN mkdir -p logs/info logs/error
+RUN mkdir -p logs/info logs/error && \
+    chmod -R 755 logs
 
 # Expose port
 EXPOSE 3003
 
 # Run production build
-CMD ["yarn", "run", "start:prod"]
+CMD ["node", "dist/main.js"]
