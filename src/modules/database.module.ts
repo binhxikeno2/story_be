@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserEntity } from 'database/entities';
+import { CrawlProcessDetailEntity, CrawlProcessEntity, UserEntity } from 'database/entities';
+import { CrawlProcessRepository } from 'database/repositories/crawlProcess.repository';
+import { CrawlProcessDetailRepository } from 'database/repositories/crawlProcessDetail.repository';
 import { UserRepository } from 'database/repositories/user.repository';
 
 import { registerAsDatabase } from '../database/config.database';
@@ -23,9 +25,9 @@ import { registerAsDatabase } from '../database/config.database';
         return { ...result, autoLoadEntities: true };
       },
     }),
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, CrawlProcessEntity, CrawlProcessDetailEntity]),
   ],
-  providers: [UserRepository],
+  providers: [UserRepository, CrawlProcessRepository, CrawlProcessDetailRepository],
   exports: [TypeOrmModule],
 })
 export class DatabaseModule {}

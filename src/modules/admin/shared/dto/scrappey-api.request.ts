@@ -1,53 +1,23 @@
+import { convertDataToInstance } from 'shared/dto/response.dto';
 import { CheckApiProperty } from 'shared/validators/checkProperty.decorator';
-
-export enum RequestType {
-    BROWSER = 'browser',
-    REQUEST = 'request',
-}
-
-export class CookieJarEntryDto {
-    @CheckApiProperty({ type: 'string', required: true })
-    name: string;
-
-    @CheckApiProperty({ type: 'string', required: true })
-    value: string;
-
-    @CheckApiProperty({ type: 'string', required: true })
-    domain: string;
-
-    @CheckApiProperty({ type: 'string' })
-    path?: string;
-}
-
 export class ScrappeyApiRequestDto {
-    @CheckApiProperty({ type: 'string' })
-    session?: string;
+  @CheckApiProperty({ type: 'string', required: true })
+  cmd: string;
 
-    @CheckApiProperty({ type: CookieJarEntryDto, isArray: true })
-    cookiejar?: CookieJarEntryDto[];
+  @CheckApiProperty({ type: 'string', required: true })
+  url: string;
 
-    @CheckApiProperty({ type: 'string' })
-    cookies?: string;
+  @CheckApiProperty({ type: 'boolean', required: true })
+  premiumProxy: boolean;
 
-    @CheckApiProperty({ type: 'string' })
-    proxy?: string;
+  @CheckApiProperty({ type: 'string', required: false })
+  proxyCountry: string;
 
-    @CheckApiProperty({ type: 'string' })
-    proxyCountry?: string;
+  constructor(data?: Partial<ScrappeyApiRequestDto>) {
+    convertDataToInstance(data, this);
+  }
 
-    @CheckApiProperty()
-    customHeaders?: Record<string, string>;
-
-    @CheckApiProperty({ type: 'boolean' })
-    includeImages?: boolean;
-
-    @CheckApiProperty({ type: 'boolean' })
-    includeLinks?: boolean;
-
-    @CheckApiProperty({ enum: RequestType })
-    requestType?: RequestType;
-
-    @CheckApiProperty()
-    localStorage?: Record<string, string>;
+  toJson(): string {
+    return JSON.stringify(this);
+  }
 }
-

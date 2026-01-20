@@ -1,14 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { WorkerManager } from 'shared/worker/worker.manager';
 
-import { CrawlCategoryService } from '../crawl-category/services/crawl-category.service';
-
 @Injectable()
 export class ScrollJobScheduler {
-  constructor(
-    private readonly workerManager: WorkerManager,
-    private readonly crawlCategoryService: CrawlCategoryService,
-  ) {}
+  constructor(private readonly workerManager: WorkerManager) {}
 
   // @Cron(CronExpression.EVERY_DAY_AT_3AM) // 20:49:05 daily
   // async handleScrollJob(): Promise<void> {
@@ -25,6 +20,6 @@ export class ScrollJobScheduler {
 
   // @Cron('00 30 03 * * *') // 3:30 AM daily
   // async handleScrollJobCategoryDetail(): Promise<void> {
-  //     await this.workerManager.startJob(CRAWL_CATEGORY_DETAIL_WORKER_NAME);
+  //     await this.workerManager.startJob(CRAWL_POST_DETAIL_WORKER_NAME);
   // }
 }

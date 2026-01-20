@@ -4,22 +4,22 @@ import { ApiAdminController } from 'shared/decorators/apiController.decorator';
 import { ApiBaseOkResponse } from 'shared/decorators/apiDoc.decorator';
 import { WorkerManager } from 'shared/worker/worker.manager';
 
-import { CRAWL_POST_WORKER_NAME } from './crawl-post.constant';
+import { CRAWL_PROCESS_WORKER_NAME } from './crawl-process.constant';
 
 @ApiAdminController({
-  name: 'CrawlPost',
+  name: 'CrawlProcess',
   authRequired: true,
 })
-export class CrawlPostController extends BaseController {
+export class CrawlProcessController extends BaseController {
   constructor(private readonly workerManager: WorkerManager) {
     super();
   }
 
   @Post('start')
   @ApiBaseOkResponse({
-    summary: 'Start crawl post',
+    summary: 'Start crawl process',
   })
   public async start(): Promise<void> {
-    this.workerManager.startJob(CRAWL_POST_WORKER_NAME);
+    this.workerManager.startJob(CRAWL_PROCESS_WORKER_NAME);
   }
 }

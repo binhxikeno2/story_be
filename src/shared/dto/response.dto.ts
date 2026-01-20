@@ -52,7 +52,7 @@ export class Pagination<T> {
 
 export class BaseBaseResDto {
   @ExposeApiProperty()
-  id: string;
+  id: number;
 
   @ExposeApiProperty()
   createdAt: string;
