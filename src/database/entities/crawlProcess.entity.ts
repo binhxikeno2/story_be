@@ -50,6 +50,13 @@ export class CrawlProcessEntity extends BaseEntity {
   })
   public lastedAt?: Date;
 
+  @Column({
+    type: 'text',
+    nullable: true,
+    name: 'error',
+  })
+  public error?: string;
+
   @OneToMany(() => CrawlProcessDetailEntity, (detail) => detail.crawlProcess, { cascade: true })
   public details?: CrawlProcessDetailEntity[];
 }

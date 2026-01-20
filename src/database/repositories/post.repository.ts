@@ -75,4 +75,17 @@ export class PostRepository extends BaseRepository<PostEntity> {
       relations: ['chapters', 'chapters.stories', 'category', 'tags'],
     });
   }
+
+  public async getPostEmptyInternalThumbnailUrl(): Promise<Partial<PostEntity>[]> {
+    //query build
+    const queryBuilder = this.createQueryBuilder('post')
+      .select('post.id', 'id')
+      .addSelect('post.thumbnailUrl', 'thumbnailUrl')
+      .addSelect('post.internalThumbnailUrl', 'internalThumbnailUrl')
+      .where('post.internalThumbnailUrl IS NULL')
+      .orderBy('post.lastUpdated', 'ASC')
+      .getRawMany();
+
+    return queryBuilder;
+  }
 }

@@ -48,18 +48,28 @@ export function parsePaginationFromHtml(html: string): PaginationResult | null {
   }
 }
 
-export function parseDetailUrlsFromHtml(html: string): string[] {
+export interface DetailUrl {
+  url: string;
+  title: string;
+}
+
+export function parseDetailUrlsFromHtml(html: string): DetailUrl[] {
   try {
-    const detailUrls: string[] = [];
+    const detailUrls: DetailUrl[] = [];
     const h3TitleRegex =
-      /<h3[^>]*class=["'][^"']*entry-title[^"']*mh-loop-title[^"']*["'][^>]*>[\s\S]*?<a[^>]*href=["']([^"']+)["'][^>]*>/gi;
+      /<h3[^>]*class=["'][^"']*entry-title[^"']*mh-loop-title[^"']*["'][^>]*>\s*<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>\s*<\/h3>/gi;
 
     let match: RegExpExecArray | null;
 
     while ((match = h3TitleRegex.exec(html)) !== null) {
       const url = match[1];
-      if (url && !detailUrls.includes(url)) {
-        detailUrls.push(url);
+      const titleText = match[2]?.replace(/<[^>]*>/g, '').trim() || '';
+
+      if (url && titleText && !detailUrls.some((item) => item.url === url)) {
+        detailUrls.push({
+          url,
+          title: titleText,
+        });
       }
     }
 

@@ -49,6 +49,13 @@ export class PostEntity extends BaseEntity {
   public thumbnailUrl: string;
 
   @Column({
+    length: 500,
+    nullable: true,
+    name: 'internal_thumbnail_url',
+  })
+  public internalThumbnailUrl: string;
+
+  @Column({
     type: 'timestamp',
     nullable: true,
     name: 'last_updated',

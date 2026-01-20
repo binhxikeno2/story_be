@@ -3,6 +3,7 @@ export * from './category.entity';
 export * from './chapter.entity';
 export * from './crawlProcess.entity';
 export * from './crawlProcessDetail.entity';
+export * from './crawlProcessDetailPostLink.entity';
 export * from './personalToken.entity';
 export * from './post.entity';
 export * from './story.entity';

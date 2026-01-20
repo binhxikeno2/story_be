@@ -40,5 +40,5 @@ export class CategoryEntity extends BaseEntity {
   children?: CategoryEntity[];
 
   @OneToMany(() => PostEntity, (post) => post.category)
-  posts: PostEntity[];
+  posts?: PostEntity[];
 }

@@ -4,22 +4,22 @@ import { ApiAdminController } from 'shared/decorators/apiController.decorator';
 import { ApiBaseOkResponse } from 'shared/decorators/apiDoc.decorator';
 import { WorkerManager } from 'shared/worker/worker.manager';
 
-import { CRAWL_PROCESS_WORKER_NAME } from './crawl-process.constant';
+import { UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME } from './upload-story-media-to-storage.constant';
 
 @ApiAdminController({
-  name: 'CrawlProcess',
+  name: 'UploadStoryMediaToStorage',
   authRequired: true,
 })
-export class CrawlProcessController extends BaseController {
+export class UploadStoryMediaToStorageController extends BaseController {
   constructor(private readonly workerManager: WorkerManager) {
     super();
   }
 
   @Post('start')
   @ApiBaseOkResponse({
-    summary: 'Start crawl process',
+    summary: 'Start upload story media to storage',
   })
   public async start(): Promise<void> {
-    this.workerManager.startJob(CRAWL_PROCESS_WORKER_NAME);
+    this.workerManager.startJob(UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME);
   }
 }

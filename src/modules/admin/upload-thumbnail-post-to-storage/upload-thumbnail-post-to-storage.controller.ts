@@ -4,22 +4,22 @@ import { ApiAdminController } from 'shared/decorators/apiController.decorator';
 import { ApiBaseOkResponse } from 'shared/decorators/apiDoc.decorator';
 import { WorkerManager } from 'shared/worker/worker.manager';
 
-import { CRAWL_PROCESS_WORKER_NAME } from './crawl-process.constant';
+import { UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME } from './upload-thumbnail-post-to-storage.constant';
 
 @ApiAdminController({
-  name: 'CrawlProcess',
+  name: 'UploadThumbnailPostToStorage',
   authRequired: true,
 })
-export class CrawlProcessController extends BaseController {
+export class UploadThumbnailPostToStorageController extends BaseController {
   constructor(private readonly workerManager: WorkerManager) {
     super();
   }
 
   @Post('start')
   @ApiBaseOkResponse({
-    summary: 'Start crawl process',
+    summary: 'Start upload thumbnail post to storage',
   })
   public async start(): Promise<void> {
-    this.workerManager.startJob(CRAWL_PROCESS_WORKER_NAME);
+    this.workerManager.startJob(UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME);
   }
 }

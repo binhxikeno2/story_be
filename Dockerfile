@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Install yarn if not available
 RUN apk add --no-cache yarn || npm install -g yarn

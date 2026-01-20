@@ -59,8 +59,8 @@ export class WorkerManager implements OnModuleInit {
       return;
     }
 
-    await worker.start();
     logger.info(`[WorkerManager] Started job for worker "${workerName}"`);
+    await worker.start();
   }
 
   /**

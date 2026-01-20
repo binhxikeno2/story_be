@@ -32,6 +32,12 @@ export class CrawlProcessDetailEntity extends BaseEntity {
   public url: string;
 
   @Column({
+    type: 'text',
+    name: 'title',
+  })
+  public title: string;
+
+  @Column({
     type: 'enum',
     enum: CrawlProcessDetailStatus,
     name: 'status',
