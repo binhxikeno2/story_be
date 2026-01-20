@@ -17,28 +17,27 @@ jobs:
       - name: Setup env
         run: |
           touch .env
-          echo "NEXT_PUBLIC_API_URL=${{ secrets.PORT }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.TZ }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.LOG_CONSOLE }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.NODE_ENV }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.API_DOC_STATUS }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.MYSQL_HOST }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.MYSQL_PORT }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.MYSQL_USER }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.MYSQL_PASSWORD }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.MYSQL_DATABASE }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.TARGET_CRAWL_HOST }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.RAPIDGATOR_USERNAME }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.RAPIDGATOR_PASSWORD }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.RAPIDGATOR_DOWNLOAD_PATH }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.SCRAPPY_KEY_API }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.HETZNER_S3_ACCESS_KEY }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.HETZNER_S3_SECRET_KEY }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.HETZNER_S3_ENDPOINT }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.HETZNER_S3_BUCKET }}" >> .env
-          echo "NEXT_PUBLIC_MODE=${{ secrets.HETZNER_S3_REGION }}" >> .env
-          cat .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+          echo "TZ=${{ secrets.TZ }}" >> .env
+          echo "LOG_CONSOLE=${{ secrets.LOG_CONSOLE }}" >> .env
+          echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> .env
+          echo "API_DOC_STATUS=${{ secrets.API_DOC_STATUS }}" >> .env
+          echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env
+          echo "MYSQL_PORT=${{ secrets.MYSQL_PORT }}" >> .env
+          echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env
+          echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+          echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "TARGET_CRAWL_HOST=${{ secrets.TARGET_CRAWL_HOST }}" >> .env
+          echo "RAPIDGATOR_USERNAME=${{ secrets.RAPIDGATOR_USERNAME }}" >> .env
+          echo "RAPIDGATOR_PASSWORD=${{ secrets.RAPIDGATOR_PASSWORD }}" >> .env
+          echo "RAPIDGATOR_DOWNLOAD_PATH=${{ secrets.RAPIDGATOR_DOWNLOAD_PATH }}" >> .env
+          echo "SCRAPPY_KEY_API=${{ secrets.SCRAPPY_KEY_API }}" >> .env
+          echo "HETZNER_S3_ACCESS_KEY=${{ secrets.HETZNER_S3_ACCESS_KEY }}" >> .env
+          echo "HETZNER_S3_SECRET_KEY=${{ secrets.HETZNER_S3_SECRET_KEY }}" >> .env
+          echo "HETZNER_S3_ENDPOINT=${{ secrets.HETZNER_S3_ENDPOINT }}" >> .env
+          echo "HETZNER_S3_BUCKET=${{ secrets.HETZNER_S3_BUCKET }}" >> .env
+          echo "HETZNER_S3_REGION=${{ secrets.HETZNER_S3_REGION }}" >> .env
 
           echo "✅ Environment file created successfully"
 
