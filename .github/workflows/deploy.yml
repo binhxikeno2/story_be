@@ -38,6 +38,7 @@ jobs:
           echo "NEXT_PUBLIC_MODE=${{ secrets.HETZNER_S3_ENDPOINT }}" >> .env
           echo "NEXT_PUBLIC_MODE=${{ secrets.HETZNER_S3_BUCKET }}" >> .env
           echo "NEXT_PUBLIC_MODE=${{ secrets.HETZNER_S3_REGION }}" >> .env
+         cat .env
 
           echo "✅ Environment file created successfully"
 
