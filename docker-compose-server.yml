@@ -2,5 +2,25 @@ version: '3.8'
 services:
   app:
     image: binhxikeno2/story-be:latest
+    container_name: story-be-app
     ports:
       - '3003:3003'
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '3'
+        labels: 'service=story-be'
+    volumes:
+      - ./logs:/src/logs
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - LOG_CONSOLE=true
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3003/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

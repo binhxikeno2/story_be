@@ -67,14 +67,15 @@ const logger = winston.createLogger({
   transports: [infoTransport, errorTransport],
 });
 
-const enableConsoleLog = process.env.LOG_CONSOLE === 'true' || process.env.NODE_ENV === 'development';
-if (enableConsoleLog) {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.combine(winston.format.splat(), winston.format.colorize(), winston.format.simple()),
-    }),
-  );
-}
+// Always output to console so Docker/Portainer can capture logs
+// Error logs go to stderr, info logs go to stdout
+logger.add(
+  new winston.transports.Console({
+    format: winston.format.combine(winston.format.splat(), winston.format.colorize(), winston.format.simple()),
+    // Separate error logs to stderr for better Docker log handling
+    stderrLevels: ['error'],
+  }),
+);
 
 const stream = {
   write: (message: string) => {
