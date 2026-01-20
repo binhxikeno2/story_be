@@ -13,7 +13,6 @@ services:
         labels: 'service=story-be'
     volumes:
       - ./logs:/src/logs
-    # Environment variables
     environment:
       - NODE_ENV=production
       - LOG_CONSOLE=true
