@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CategoryEntity, PostEntity } from 'database/entities';
+import { LIMIT_POST } from 'modules/admin/upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
 import { Pagination } from 'shared/dto/response.dto';
 import { DataSource, FindOptionsOrder, FindOptionsWhere, Like } from 'typeorm';
 
@@ -84,6 +85,7 @@ export class PostRepository extends BaseRepository<PostEntity> {
       .addSelect('post.internalThumbnailUrl', 'internalThumbnailUrl')
       .where('post.internalThumbnailUrl IS NULL')
       .orderBy('post.lastUpdated', 'ASC')
+      .limit(LIMIT_POST)
       .getRawMany();
 
     return queryBuilder;

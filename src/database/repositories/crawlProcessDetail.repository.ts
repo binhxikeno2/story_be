@@ -4,6 +4,7 @@ import {
   CrawlProcessDetailPostLinkEntity,
   CrawlProcessDetailStatus,
 } from 'database/entities';
+import { LIMIT_CRAWL_PROCESS_DETAIL } from 'modules/admin/crawl-process/crawl-process.constant';
 import { DataSource, In } from 'typeorm';
 
 import { BaseRepository } from './base.repository';
@@ -57,6 +58,7 @@ export class CrawlProcessDetailRepository extends BaseRepository<CrawlProcessDet
       .where('crawl_process_detail.status IN (:...status)', { status })
       .orderBy('crawl_process_detail.status', 'ASC')
       .addOrderBy('crawl_process_detail.id', 'ASC')
+      .limit(LIMIT_CRAWL_PROCESS_DETAIL)
       .getRawMany();
   }
 

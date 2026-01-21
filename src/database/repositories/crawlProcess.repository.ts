@@ -17,6 +17,35 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
     super(CrawlProcessEntity, dataSource);
   }
 
+  public async findPageCrawlError(crawlProcess: CrawlProcessEntity): Promise<number[]> {
+    if (!crawlProcess.range) {
+      return [];
+    }
+
+    const { pageFrom, pageTo } = crawlProcess.range;
+    const detailRepository = this.dataSource.getRepository(CrawlProcessDetailEntity);
+
+    // Fetch only distinct pages that have been crawled - much smaller dataset
+    const crawledPages = await detailRepository
+      .createQueryBuilder('detail')
+      .select('DISTINCT detail.page', 'page')
+      .where('detail.crawlProcessId = :crawlProcessId', { crawlProcessId: crawlProcess.id })
+      .getRawMany();
+
+    // Create Set for O(1) lookup performance
+    const crawledPageSet = new Set(crawledPages.map((item) => item.page));
+
+    // Loop through range and find missing pages - no large array creation
+    const errorPages: number[] = [];
+    for (let page = pageFrom; page <= pageTo; page++) {
+      if (!crawledPageSet.has(page)) {
+        errorPages.push(page);
+      }
+    }
+
+    return errorPages;
+  }
+
   public async createCrawlProcess(data?: Partial<CrawlProcessEntity>): Promise<CrawlProcessEntity> {
     return this.getRepository().save({ ...data, status: CrawlProcessStatus.CREATED });
   }
@@ -51,7 +80,7 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
     });
   }
 
-  private async calculateStats(crawlProcessId: number): Promise<CrawlProcessStats> {
+  public async calculateStats(crawlProcessId: number): Promise<CrawlProcessStats> {
     const detailRepository = this.dataSource.getRepository(CrawlProcessDetailEntity);
 
     const [totalPage, crawled] = await Promise.all([

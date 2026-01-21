@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { StoryEntity } from 'database/entities';
+import { LIMIT_STORY } from 'modules/admin/crawl-link-media/crawl-link-media.constant';
 import { DataSource } from 'typeorm';
 
 import { BaseRepository } from './base.repository';
@@ -16,6 +17,7 @@ export class StoryRepository extends BaseRepository<StoryEntity> {
       .addSelect('story.media', 'media')
       .where('story.rapid_gator_url IS NULL')
       .orderBy('story.id', 'ASC')
+      .limit(LIMIT_STORY)
       .getRawMany();
   }
 
@@ -26,6 +28,7 @@ export class StoryRepository extends BaseRepository<StoryEntity> {
       .where('story.internal_url IS NULL')
       .andWhere('story.rapid_gator_url IS NOT NULL')
       .orderBy('story.id', 'ASC')
+      .limit(LIMIT_STORY)
       .getRawMany();
   }
 }
