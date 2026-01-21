@@ -66,7 +66,7 @@ export class CrawlProcessService {
     const crawlProcessLatest = await this.crawlProcessRepository.findCrawlProcessLatest();
 
     if (!crawlProcessLatest) {
-      return statsCurrent;
+      return { ...statsCurrent, hasNewPage: true };
     }
 
     const { range, lastedAt: lastedAtLatest } = crawlProcessLatest;
