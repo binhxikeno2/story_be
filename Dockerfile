@@ -25,4 +25,5 @@ RUN mkdir -p logs/info logs/error && \
 EXPOSE 3003
 
 # Run production build
-CMD ["node", "dist/main.js"]
+# CMD ["node", "dist/main.js"]
+CMD ["yarn", "run", "dev"]
