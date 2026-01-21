@@ -26,4 +26,4 @@ EXPOSE 3003
 
 # Run production build
 # CMD ["node", "dist/main.js"]
-CMD ["yarn", "run", "dev"]
+CMD ["yarn", "run", "start:dev"]
