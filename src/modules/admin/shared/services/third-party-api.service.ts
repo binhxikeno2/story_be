@@ -38,6 +38,17 @@ export class ThirdPartyApiService {
         body: params.toJson(),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        logger.error(`[ThirdPartyApiService] API returned error status ${response.status}: ${errorText}`);
+
+        return {
+          html: '',
+          currentUrl: '',
+          blocked: true,
+        };
+      }
+
       const data = await response.json();
       const dataTransformed = plainToInstance(ScrappeyApiResponseDto, data);
 

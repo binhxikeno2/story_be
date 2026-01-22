@@ -55,7 +55,11 @@ export class CrawlPostService {
     try {
       const { url } = crawlProcessDetail;
 
-      const { html } = await this.thirdPartyApiService.fetchHtml(url);
+      const { html, blocked } = await this.thirdPartyApiService.fetchHtml(url);
+
+      if (blocked) {
+        throw new Error('Blocked by Cloudflare');
+      }
 
       if (!html) {
         throw new Error('HTML is empty');

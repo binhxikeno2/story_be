@@ -11,6 +11,10 @@ export class ThirdPartyApiResponseDto {
   @Expose()
   currentUrl: string;
 
+  @ApiProperty()
+  @Expose()
+  blocked?: boolean;
+
   constructor(data?: Partial<ThirdPartyApiResponseDto>) {
     convertDataToInstance(data, this);
   }
