@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
   CrawlProcessDetailEntity,
-  CrawlProcessDetailStatus,
   CrawlProcessEntity,
   CrawlProcessRange,
   CrawlProcessStats,
@@ -83,14 +82,17 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
   public async calculateStats(crawlProcessId: number): Promise<CrawlProcessStats> {
     const detailRepository = this.dataSource.getRepository(CrawlProcessDetailEntity);
 
-    const [totalPage, crawled] = await Promise.all([
+    const [crawledCount, crawlProcess] = await Promise.all([
       detailRepository.count({ where: { crawlProcessId } }),
-      detailRepository.count({ where: { crawlProcessId, status: CrawlProcessDetailStatus.DONE } }),
+      this.getRepository().findOne({ where: { id: crawlProcessId } }),
     ]);
+
+    const range = crawlProcess?.range;
+    const totalPage = range ? range.pageTo : 0;
 
     return {
       totalPage,
-      crawled,
+      crawled: crawledCount,
     };
   }
 
