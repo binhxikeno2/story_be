@@ -1,3 +1,3 @@
 export const CRAWL_POST_WORKER_NAME = 'CRAWL_POST_WORKER';
 
-export const CONCURRENCY_CRAWL_POST = 5;
+export const CONCURRENCY_CRAWL_POST = 20;
