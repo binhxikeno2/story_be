@@ -30,16 +30,17 @@ export class CrawlProcessService {
 
     try {
       const statsCurrent = await this.getStatsCrawl();
-      const { pageFrom, pageTo, lastedAt, hasNewPage } = await this.calculateStatsCrawl({ ...statsCurrent });
+      const { pageFrom, pageTo, lastedAt, hasNewPage, pageFound } = await this.calculateStatsCrawl({ ...statsCurrent });
 
       if (!hasNewPage) {
         logger.info('No new page found, skipping');
+        await this.crawlProcessRepository.setStatusCrawlProcess(crawlProcess.id, CrawlProcessStatus.SKIP);
 
         return;
       }
 
       await this.crawlProcessRepository.updateAndGetCrawlProcess(crawlProcess.id, {
-        range: { pageFrom, pageTo },
+        range: { pageFrom, pageTo, pageFound },
         lastedAt,
         status: CrawlProcessStatus.RUNNING,
       });
@@ -77,10 +78,10 @@ export class CrawlProcessService {
 
     const { range, lastedAt: lastedAtLatest } = crawlProcessLatest;
     const pageFromLatest = range?.pageFrom;
-    const pageToLatest = range?.pageTo;
+    const pageFoundLatest = range?.pageFound;
 
     const isSamePageFrom = pageFromLatest === statsCurrent.pageFrom;
-    const isSamePageTo = pageToLatest === statsCurrent.pageTo;
+    const isSamePageTo = pageFoundLatest === statsCurrent.pageTo;
     const isSameLastedAt = lastedAtLatest && statsCurrent.lastedAt.getTime() === lastedAtLatest.getTime();
     const isSame = isSamePageFrom && isSamePageTo && isSameLastedAt;
 
@@ -91,12 +92,13 @@ export class CrawlProcessService {
       };
     }
 
-    const pageTo = statsCurrent.pageTo - (pageToLatest || 0);
+    const pageTo = statsCurrent.pageTo - (pageFoundLatest || 0);
 
     return {
       pageFrom: 1,
       pageTo: pageTo + 1, // +1 because we need to crawl the next page
       lastedAt: statsCurrent.lastedAt,
+      pageFound: statsCurrent.pageTo,
       hasNewPage: true,
     };
   }
@@ -119,6 +121,7 @@ export class CrawlProcessService {
     return {
       pageFrom: paginated.pageFrom,
       pageTo: paginated.pageTo,
+      pageFound: paginated.pageTo,
       lastedAt,
     };
   }

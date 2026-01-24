@@ -70,6 +70,10 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
     return this.getRepository().save({ id, ...data });
   }
 
+  public async setStatusCrawlProcess(id: number, status: CrawlProcessStatus): Promise<void> {
+    await this.getRepository().update(id, { status });
+  }
+
   public async setDone(id: number): Promise<void> {
     const stats = await this.calculateStats(id);
 
@@ -82,17 +86,22 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
   public async calculateStats(crawlProcessId: number): Promise<CrawlProcessStats> {
     const detailRepository = this.dataSource.getRepository(CrawlProcessDetailEntity);
 
-    const [crawledCount, crawlProcess] = await Promise.all([
-      detailRepository.count({ where: { crawlProcessId } }),
+    const [crawledPageResult, crawlProcess] = await Promise.all([
+      detailRepository
+        .createQueryBuilder('detail')
+        .select('COUNT(DISTINCT detail.page)', 'count')
+        .where('detail.crawlProcessId = :crawlProcessId', { crawlProcessId })
+        .getRawOne(),
       this.getRepository().findOne({ where: { id: crawlProcessId } }),
     ]);
 
     const range = crawlProcess?.range;
     const totalPage = range ? range.pageTo : 0;
+    const crawledPageCount = parseInt(crawledPageResult?.count || '0', 10);
 
     return {
       totalPage,
-      crawled: crawledCount,
+      crawled: crawledPageCount,
     };
   }
 

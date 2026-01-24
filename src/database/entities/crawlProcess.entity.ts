@@ -8,11 +8,13 @@ export enum CrawlProcessStatus {
   RUNNING = 'running',
   DONE = 'done',
   FAILED = 'failed',
+  SKIP = 'skip',
 }
 
 export interface CrawlProcessRange {
   pageFrom: number;
   pageTo: number;
+  pageFound: number;
 }
 
 export interface CrawlProcessStats {
