@@ -36,6 +36,7 @@ export class RapidGatorDownloadService {
     }
 
     if (data.responseStatus === 404) {
+      // Not found
       return { data: null, contentType: '', extension: '' };
     }
 
