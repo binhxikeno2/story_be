@@ -69,7 +69,7 @@ export class RapidGatorDownloadService {
 
     const data = (await response.json()) as RapidGatorDownloadResponseDto;
 
-    return data;
+    return plainToInstance(RapidGatorDownloadResponseDto, data);
   }
 
   private async ensureSessionId(): Promise<string> {
