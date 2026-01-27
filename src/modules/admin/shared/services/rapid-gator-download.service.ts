@@ -33,6 +33,9 @@ export class RapidGatorDownloadService {
       }
     }
 
+    // eslint-disable-next-line no-console
+    console.log(data, 'data');
+
     const downloadUrl = data?.response?.url;
 
     if (!downloadUrl) {
