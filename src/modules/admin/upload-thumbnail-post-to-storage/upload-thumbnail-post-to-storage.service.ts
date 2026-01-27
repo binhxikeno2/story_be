@@ -5,6 +5,7 @@ import { generateUniqueFileName } from 'shared/utils/generate-unique-filename.ut
 
 import { HetznerS3Service } from '../shared/services/hetzner-s3.service';
 import { PublicDownloadService } from '../shared/services/public-download.service';
+import { CONCURRENCY_UPLOAD_THUMBNAIL_POST } from './upload-thumbnail-post-to-storage.constant';
 
 @Injectable()
 export class UploadThumbnailPostToStorageService {
@@ -18,25 +19,53 @@ export class UploadThumbnailPostToStorageService {
     try {
       const postsWithEmptyInternalThumbnailUrl = await this.postRepository.getPostEmptyInternalThumbnailUrl();
 
-      for (const postWithEmptyInternalThumbnailUrl of postsWithEmptyInternalThumbnailUrl) {
-        if (postWithEmptyInternalThumbnailUrl.thumbnailUrl) {
-          const { data, contentType } = await this.publicDownloadService.downloadFile(
-            postWithEmptyInternalThumbnailUrl.thumbnailUrl,
-          );
-          const nameFile = generateUniqueFileName('post');
+      const batchCount = Math.ceil(postsWithEmptyInternalThumbnailUrl.length / CONCURRENCY_UPLOAD_THUMBNAIL_POST);
+      const batches = Array.from({ length: batchCount }, (_, i) =>
+        postsWithEmptyInternalThumbnailUrl.slice(
+          i * CONCURRENCY_UPLOAD_THUMBNAIL_POST,
+          (i + 1) * CONCURRENCY_UPLOAD_THUMBNAIL_POST,
+        ),
+      );
 
-          const internalThumbnailUrl = await this.hetznerS3Service.upload({
-            body: data,
-            key: nameFile,
-            contentType,
-            acl: 'public-read',
-          });
+      for (const batch of batches) {
+        await Promise.all(
+          batch.map(async (postWithEmptyInternalThumbnailUrl) => {
+            try {
+              if (postWithEmptyInternalThumbnailUrl.thumbnailUrl) {
+                const { data, contentType } = await this.publicDownloadService.downloadFile(
+                  postWithEmptyInternalThumbnailUrl.thumbnailUrl,
+                );
 
-          if (internalThumbnailUrl) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            await this.postRepository.update(postWithEmptyInternalThumbnailUrl.id!, { internalThumbnailUrl });
-          }
-        }
+                if (!data) {
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  await this.postRepository.update(postWithEmptyInternalThumbnailUrl.id!, {
+                    internalThumbnailUrl: 'NOT_FOUND',
+                  });
+
+                  return;
+                }
+
+                const nameFile = generateUniqueFileName('post');
+
+                const internalThumbnailUrl = await this.hetznerS3Service.upload({
+                  body: data,
+                  key: nameFile,
+                  contentType,
+                  acl: 'public-read',
+                });
+
+                if (internalThumbnailUrl) {
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  await this.postRepository.update(postWithEmptyInternalThumbnailUrl.id!, { internalThumbnailUrl });
+                }
+              }
+            } catch (error) {
+              logger.error(
+                `[UploadThumbnailPostToStorageService] Error processing post id=${postWithEmptyInternalThumbnailUrl.id}: ${error}`,
+              );
+            }
+          }),
+        );
       }
     } catch (error) {
       logger.error(`[UploadThumbnailPostToStorageService] Error uploading to storage: ${error}`);

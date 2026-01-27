@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { logger } from 'shared/logger/app.logger';
 import { WorkerManager } from 'shared/worker/worker.manager';
 
 import { UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME } from '../upload-story-media-to-storage/upload-story-media-to-storage.constant';
+import { UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME } from '../upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
 
 @Injectable()
 export class ScrollJobScheduler {
@@ -64,25 +65,25 @@ export class ScrollJobScheduler {
   //   }
   // }
 
-  // @Cron('0 2,10,18 * * *') // Runs at 2:00, 10:00, 18:00 (every 8 hours, offset by 2 hours)
-  // async handleUploadThumbnailPostToStorageJob(): Promise<void> {
-  //   try {
-  //     if (this.workerManager.isWorkerRunning(UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME)) {
-  //       logger.warn('[ScrollJobScheduler] Upload thumbnail post to storage worker is already running, skipping...');
+  @Cron(CronExpression.EVERY_4_HOURS) // Runs at 2:00, 10:00, 18:00 (every 8 hours, offset by 2 hours)
+  async handleUploadThumbnailPostToStorageJob(): Promise<void> {
+    try {
+      if (this.workerManager.isWorkerRunning(UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME)) {
+        logger.warn('[ScrollJobScheduler] Upload thumbnail post to storage worker is already running, skipping...');
 
-  //       return;
-  //     }
+        return;
+      }
 
-  //     logger.info('[ScrollJobScheduler] Starting upload thumbnail post to storage job via cron schedule');
-  //     this.workerManager.startJob(UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME).catch((error) => {
-  //       logger.error(`[ScrollJobScheduler] Error in upload thumbnail post to storage job: ${error}`);
-  //     });
-  //   } catch (error) {
-  //     logger.error(`[ScrollJobScheduler] Error starting upload thumbnail post to storage job: ${error}`);
-  //   }
-  // }
+      logger.info('[ScrollJobScheduler] Starting upload thumbnail post to storage job via cron schedule');
+      this.workerManager.startJob(UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME).catch((error) => {
+        logger.error(`[ScrollJobScheduler] Error in upload thumbnail post to storage job: ${error}`);
+      });
+    } catch (error) {
+      logger.error(`[ScrollJobScheduler] Error starting upload thumbnail post to storage job: ${error}`);
+    }
+  }
 
-  @Cron('0 6,17,20,23 * * *') // Runs at 6:00, 14:00, 22:00 (every 8 hours, offset by 6 hours)
+  @Cron(CronExpression.EVERY_4_HOURS) // Runs at 6:00, 14:00, 22:00 (every 8 hours, offset by 6 hours)
   async handleUploadStoryMediaToStorageJob(): Promise<void> {
     try {
       if (this.workerManager.isWorkerRunning(UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME)) {
