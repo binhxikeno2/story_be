@@ -40,9 +40,6 @@ export class RapidGatorDownloadService {
       return { data: null, contentType: '', extension: '' };
     }
 
-    // eslint-disable-next-line no-console
-    console.log(data, 'data');
-
     const downloadUrl = data?.response?.url;
 
     if (!downloadUrl) {
