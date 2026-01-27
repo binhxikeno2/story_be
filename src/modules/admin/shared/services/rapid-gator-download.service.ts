@@ -19,7 +19,9 @@ export class RapidGatorDownloadService {
     this.apiConfig = { userName, password };
   }
 
-  async getDocumentFromRapidGator(url: string): Promise<{ data: Uint8Array; contentType: string; extension: string }> {
+  async getDocumentFromRapidGator(
+    url: string,
+  ): Promise<{ data: Uint8Array | null; contentType: string; extension: string }> {
     let sessionId = await this.ensureSessionId();
     let data = await this.fetchDownloadUrl(url, sessionId);
 
@@ -33,8 +35,9 @@ export class RapidGatorDownloadService {
       }
     }
 
-    // eslint-disable-next-line no-console
-    console.log(data, url, data?.response, 'data');
+    if (data.responseStatus === 404) {
+      return { data: null, contentType: '', extension: '' };
+    }
 
     const downloadUrl = data?.response?.url;
 

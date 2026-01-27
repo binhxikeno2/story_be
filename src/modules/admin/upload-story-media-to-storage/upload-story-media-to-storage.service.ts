@@ -25,6 +25,12 @@ export class UploadStoryMediaToStorageService {
           const { data, contentType, extension } = await this.rapidGatorDownloadService.getDocumentFromRapidGator(
             storyWithEmptyInternalUrl.rapidGatorUrl,
           );
+
+          if (!data) {
+            await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl: 'NOT_FOUND' });
+            continue;
+          }
+
           const fileName = generateUniqueFileName('story', extension);
 
           const internalUrl = await this.hetznerS3Service.upload({
