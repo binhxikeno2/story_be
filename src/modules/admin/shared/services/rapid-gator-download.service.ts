@@ -34,7 +34,7 @@ export class RapidGatorDownloadService {
     }
 
     // eslint-disable-next-line no-console
-    console.log(data, url, 'data');
+    console.log(data, url, data?.response, 'data');
 
     const downloadUrl = data?.response?.url;
 
