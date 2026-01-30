@@ -9,6 +9,7 @@ export class StoryPostResDto {
 
   @ApiProperty()
   @Expose()
+  @Transform(({ obj }) => obj.internalUrl || obj.media)
   media: string;
 }
 
@@ -86,6 +87,7 @@ export class PostListItemResDto extends HasIdResDto {
 
   @ApiProperty()
   @Expose()
+  @Transform(({ obj }) => obj.internalThumbnailUrl || obj.thumbnailUrl)
   thumbnailUrl: string;
 
   @ApiProperty()

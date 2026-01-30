@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CategoryEntity } from 'database/entities';
 import { Pagination } from 'shared/dto/response.dto';
-import { DataSource } from 'typeorm';
+import { DataSource, IsNull } from 'typeorm';
 
 import { BaseRepository } from './base.repository';
 
@@ -22,15 +22,27 @@ export class CategoryRepository extends BaseRepository<CategoryEntity> {
     const qb = this.getRepository().createQueryBuilder('category');
 
     qb.leftJoinAndSelect('category.children', 'children');
-    qb.loadRelationCountAndMap('category.postCount', 'category.posts');
-    qb.loadRelationCountAndMap('category.unreadPostCount', 'category.posts', 'post', (qb) => {
-      return qb.where('post.isRead = :isRead', { isRead: false });
+
+    // Chỉ count các post có title không null và không rỗng
+    qb.loadRelationCountAndMap('category.postCount', 'category.posts', 'post', (qb) => {
+      return qb.where("post.title IS NOT NULL AND post.title <> ''");
     });
 
-    // Load post count for children
-    qb.loadRelationCountAndMap('children.postCount', 'children.posts');
+    qb.loadRelationCountAndMap('category.unreadPostCount', 'category.posts', 'post', (qb) => {
+      return qb
+        .where('post.isRead = :isRead', { isRead: false })
+        .andWhere("post.title IS NOT NULL AND post.title <> ''");
+    });
+
+    // Load post count for children (chỉ tính các post có title hợp lệ)
+    qb.loadRelationCountAndMap('children.postCount', 'children.posts', 'childPost', (qb) => {
+      return qb.where("childPost.title IS NOT NULL AND childPost.title <> ''");
+    });
+
     qb.loadRelationCountAndMap('children.unreadPostCount', 'children.posts', 'childPost', (qb) => {
-      return qb.where('childPost.isRead = :isRead', { isRead: false });
+      return qb
+        .where('childPost.isRead = :isRead', { isRead: false })
+        .andWhere("childPost.title IS NOT NULL AND childPost.title <> ''");
     });
 
     // Only get root categories (no parent)
@@ -44,16 +56,32 @@ export class CategoryRepository extends BaseRepository<CategoryEntity> {
 
     qb.orderBy('category.createdAt', 'DESC');
 
+    if (!page && !perPage) {
+      const [items, total] = await qb.getManyAndCount();
+
+      return {
+        items,
+        pagination: {
+          page: 1,
+          perPage: total,
+          total,
+        },
+      };
+    }
+
+    const currentPage = Number(page) || 1;
+    const currentPerPage = Number(perPage) || 10;
+
     const [items, total] = await qb
-      .skip(((page || 1) - 1) * (perPage || 10))
-      .take(perPage || 10)
+      .skip((currentPage - 1) * currentPerPage)
+      .take(currentPerPage)
       .getManyAndCount();
 
     return {
       items,
       pagination: {
-        page: Number(page) || 1,
-        perPage: Number(perPage) || 10,
+        page: currentPage,
+        perPage: currentPerPage,
         total,
       },
     };
@@ -74,5 +102,13 @@ export class CategoryRepository extends BaseRepository<CategoryEntity> {
       name: category.name,
       slug: category.slug,
     };
+  }
+
+  public async getCategoriesToSync(): Promise<CategoryEntity[]> {
+    return this.find({
+      where: {
+        threeHappyGuyCategoryId: IsNull(),
+      },
+    });
   }
 }

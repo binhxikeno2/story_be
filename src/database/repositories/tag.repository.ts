@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TagEntity } from 'database/entities';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, IsNull } from 'typeorm';
 
 import { BaseRepository } from './base.repository';
 
@@ -28,5 +28,13 @@ export class TagRepository extends BaseRepository<TagEntity> {
     }
 
     return allTags;
+  }
+
+  public async getTagsToSync(): Promise<TagEntity[]> {
+    return this.find({
+      where: {
+        threeHappyGuyTagId: IsNull(),
+      },
+    });
   }
 }

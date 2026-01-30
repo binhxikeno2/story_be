@@ -1,0 +1,1 @@
+export const SYNC_TO_WP_WORKER_NAME = 'SYNC_TO_WP_WORKER';

@@ -69,6 +69,12 @@ export class PostEntity extends BaseEntity {
   })
   public isRead: boolean;
 
+  @Column({
+    nullable: true,
+    name: '3happy_guy_post_id',
+  })
+  threeHappyGuyPostId?: number;
+
   @OneToMany(() => ChapterEntity, (chapter) => chapter.post, { cascade: true })
   chapters: ChapterEntity[];
 }

@@ -32,6 +32,12 @@ export class CategoryEntity extends BaseEntity {
   })
   parentId?: number;
 
+  @Column({
+    nullable: true,
+    name: '3happy_guy_category_id',
+  })
+  threeHappyGuyCategoryId?: number;
+
   @ManyToOne(() => CategoryEntity, (category) => category.children, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'parent_id' })
   parent?: CategoryEntity;

@@ -12,6 +12,12 @@ export class TagEntity extends BaseEntity {
   @Index({ unique: true })
   public name: string;
 
+  @Column({
+    nullable: true,
+    name: '3happy_guy_tag_id',
+  })
+  threeHappyGuyTagId?: number;
+
   @ManyToMany(() => PostEntity, (post) => post.tags)
   public posts: PostEntity[];
 }

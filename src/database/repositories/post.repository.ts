@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CategoryEntity, PostEntity } from 'database/entities';
+import { PostEntity } from 'database/entities';
 import { LIMIT_POST } from 'modules/admin/upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
 import { Pagination } from 'shared/dto/response.dto';
-import { DataSource, FindOptionsOrder, FindOptionsWhere, Like } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 import { BaseRepository } from './base.repository';
 
@@ -23,51 +23,45 @@ export class PostRepository extends BaseRepository<PostEntity> {
 
   public async getPostList(query: GetPostListQuery): Promise<Pagination<PostEntity[]>> {
     const { page, perPage, title, category, isRead } = query;
-    const baseCondition: FindOptionsWhere<PostEntity> = {};
-    const orderCondition: FindOptionsOrder<PostEntity> = {
-      lastUpdated: 'DESC',
-      createdAt: 'DESC',
-    };
+
+    const pageNumber = page ?? 1;
+    const perPageNumber = perPage ?? 10;
+
+    const queryBuilder = this.createQueryBuilder('post')
+      .leftJoinAndSelect('post.category', 'category')
+      .leftJoinAndSelect('post.tags', 'tags')
+      .orderBy('post.lastUpdated', 'DESC')
+      .addOrderBy('post.createdAt', 'DESC')
+      .andWhere("post.title IS NOT NULL AND post.title <> ''");
 
     if (category) {
-      baseCondition.category = { slug: category };
+      queryBuilder.andWhere('category.slug = :category', { category });
     }
 
     if (isRead !== undefined) {
-      baseCondition.isRead = isRead;
+      queryBuilder.andWhere('post.isRead = :isRead', { isRead });
     }
-
-    let whereCondition: FindOptionsWhere<PostEntity> | FindOptionsWhere<PostEntity>[];
 
     if (title) {
-      const categoryBase = baseCondition.category as FindOptionsWhere<CategoryEntity> | undefined;
-
-      whereCondition = [
-        { ...baseCondition, title: Like(`%${title}%`) },
-        { ...baseCondition, description: Like(`%${title}%`) },
-        {
-          ...baseCondition,
-          category: categoryBase ? { ...categoryBase, name: Like(`%${title}%`) } : { name: Like(`%${title}%`) },
-        },
-        {
-          ...baseCondition,
-          category: categoryBase
-            ? { ...categoryBase, description: Like(`%${title}%`) }
-            : { description: Like(`%${title}%`) },
-        },
-      ];
-    } else {
-      whereCondition = baseCondition;
+      const likeTitle = `%${title}%`;
+      queryBuilder.andWhere(
+        '(post.title LIKE :likeTitle OR post.description LIKE :likeTitle OR category.name LIKE :likeTitle OR category.description LIKE :likeTitle)',
+        { likeTitle },
+      );
     }
 
-    return this.paginate(
-      { page, perPage },
-      {
-        where: whereCondition,
-        order: orderCondition,
-        relations: ['category', 'tags'],
+    queryBuilder.skip((pageNumber - 1) * perPageNumber).take(perPageNumber);
+
+    const [items, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      items,
+      pagination: {
+        page: pageNumber,
+        perPage: perPageNumber,
+        total,
       },
-    );
+    };
   }
 
   public async getPostDetail(id: number): Promise<PostEntity | null> {
@@ -89,5 +83,33 @@ export class PostRepository extends BaseRepository<PostEntity> {
       .getRawMany();
 
     return queryBuilder;
+  }
+
+  public async getPostsToSync(): Promise<PostEntity[]> {
+    return this.createQueryBuilder('post')
+      .leftJoinAndSelect('post.category', 'category')
+      .leftJoinAndSelect('post.tags', 'tags')
+      .leftJoinAndSelect('post.chapters', 'chapters')
+      .leftJoinAndSelect('chapters.stories', 'stories')
+      .where('category.threeHappyGuyCategoryId IS NOT NULL')
+      .andWhere('post.threeHappyGuyPostId IS NULL')
+      .andWhere("post.title IS NOT NULL AND post.title <> ''")
+      .getMany()
+      .then((posts) => {
+        // Filter posts where all stories have internalUrl
+        return posts.filter((post) => {
+          if (!post.chapters || post.chapters.length === 0) {
+            return false;
+          }
+
+          return post.chapters.every((chapter) => {
+            if (!chapter.stories || chapter.stories.length === 0) {
+              return false;
+            }
+
+            return chapter.stories.every((story) => story.internalUrl != null && story.internalUrl !== '');
+          });
+        });
+      });
   }
 }
