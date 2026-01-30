@@ -100,7 +100,9 @@ export class SyncToPostService {
         .map((chapter) => ({
           title: chapter.title,
           stories: (chapter.stories || [])
-            .filter((story) => story.internalUrl != null && story.internalUrl !== '')
+            .filter(
+              (story) => story.internalUrl != null && story.internalUrl !== '' && story.internalUrl !== 'NOT_FOUND',
+            )
             .map((story) => ({
               title: story.title,
               media: story.internalUrl || '',

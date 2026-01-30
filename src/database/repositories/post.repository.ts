@@ -96,7 +96,7 @@ export class PostRepository extends BaseRepository<PostEntity> {
       .andWhere("post.title IS NOT NULL AND post.title <> ''")
       .getMany()
       .then((posts) => {
-        // Filter posts where all stories have internalUrl
+        // Filter posts where all stories have internalUrl and internalUrl is not "NOT_FOUND"
         return posts.filter((post) => {
           if (!post.chapters || post.chapters.length === 0) {
             return false;
@@ -107,7 +107,9 @@ export class PostRepository extends BaseRepository<PostEntity> {
               return false;
             }
 
-            return chapter.stories.every((story) => story.internalUrl != null && story.internalUrl !== '');
+            return chapter.stories.every(
+              (story) => story.internalUrl != null && story.internalUrl !== '' && story.internalUrl !== 'NOT_FOUND',
+            );
           });
         });
       });
