@@ -39,6 +39,8 @@ jobs:
           echo "HETZNER_S3_BUCKET=${{ secrets.HETZNER_S3_BUCKET }}" >> .env
           echo "HETZNER_S3_REGION=${{ secrets.HETZNER_S3_REGION }}" >> .env
           echo "X_API_KEY_WP=${{ secrets.X_API_KEY_WP }}" >> .env
+          echo "API_WP_URL=${{ secrets.API_WP_URL }}" >> .env
+
 
           echo "✅ Environment file created successfully"
 
