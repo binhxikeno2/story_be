@@ -15,7 +15,7 @@ export class SyncToWpService {
   //TODO
   async onSyncToWp(): Promise<void> {
     await this.syncToCategoryService.syncCategory();
-    // await this.syncToTagService.syncTag();
-    // await this.syncToPostService.syncPost();
+    await this.syncToTagService.syncTag();
+    await this.syncToPostService.syncPost();
   }
 }
