@@ -36,7 +36,7 @@ export class UploadStoryMediaToStorageService {
                 );
 
                 if (!data) {
-                  await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl: 'NOT_FOUND' });
+                  await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl: '' });
 
                   return;
                 }
