@@ -98,6 +98,11 @@ export class PostListItemResDto extends HasIdResDto {
   @Expose()
   isRead: boolean;
 
+  @ApiProperty()
+  @Expose()
+  @Transform(({ obj }) => !!obj.threeHappyGuyPostId || false)
+  syncToWP: boolean;
+
   constructor(data?: Partial<PostListItemResDto>) {
     super();
     convertDataToInstance(data, this);

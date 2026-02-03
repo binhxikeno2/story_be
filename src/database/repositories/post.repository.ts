@@ -13,6 +13,7 @@ export type GetPostListQuery = {
   category?: string;
   isRead?: boolean;
   deleted?: boolean;
+  syncToWP?: boolean;
 };
 
 @Injectable()
@@ -22,7 +23,7 @@ export class PostRepository extends BaseRepository<PostEntity> {
   }
 
   public async getPostList(query: GetPostListQuery): Promise<Pagination<PostEntity[]>> {
-    const { page, perPage, title, category, isRead } = query;
+    const { page, perPage, title, category, isRead, syncToWP } = query;
 
     const pageNumber = page ?? 1;
     const perPageNumber = perPage ?? 10;
@@ -40,6 +41,14 @@ export class PostRepository extends BaseRepository<PostEntity> {
 
     if (isRead !== undefined) {
       queryBuilder.andWhere('post.isRead = :isRead', { isRead });
+    }
+
+    if (syncToWP !== undefined) {
+      if (syncToWP === true) {
+        queryBuilder.andWhere('post.threeHappyGuyPostId IS NOT NULL');
+      } else {
+        queryBuilder.andWhere('post.threeHappyGuyPostId IS NULL');
+      }
     }
 
     if (title) {
