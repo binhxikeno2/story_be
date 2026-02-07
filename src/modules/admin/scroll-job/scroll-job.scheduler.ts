@@ -14,7 +14,7 @@ export class ScrollJobScheduler {
   constructor(private readonly workerManager: WorkerManager) {}
 
   //trigger
-  @Cron(CronExpression.EVERY_DAY_AT_7PM) // Every day at 18:50
+  @Cron(CronExpression.EVERY_DAY_AT_10PM) // Every day at 18:50
   async handleCrawlProcessJob(): Promise<void> {
     try {
       // Check if worker is already running
