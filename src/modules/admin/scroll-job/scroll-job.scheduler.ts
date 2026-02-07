@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { logger } from 'shared/logger/app.logger';
 import { WorkerManager } from 'shared/worker/worker.manager';
 
+import { CRAWL_PROCESS_WORKER_NAME } from '../crawl-process/crawl-process.constant';
 import { SYNC_TO_WP_WORKER_NAME } from '../sync-to-wp/sync-to-wp.constant';
 import { UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME } from '../upload-story-media-to-storage/upload-story-media-to-storage.constant';
 import { UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME } from '../upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
@@ -11,24 +12,24 @@ import { UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME } from '../upload-thumbnai
 export class ScrollJobScheduler {
   constructor(private readonly workerManager: WorkerManager) {}
 
-  // @Cron(CronExpression.EVERY_DAY_AT_4AM) // 4:00 AM daily
-  // async handleCrawlProcessJob(): Promise<void> {
-  //   try {
-  //     // Check if worker is already running
-  //     if (this.workerManager.isWorkerRunning(CRAWL_PROCESS_WORKER_NAME)) {
-  //       logger.warn('[ScrollJobScheduler] Crawl process worker is already running, skipping...');
+  @Cron(CronExpression.EVERY_DAY_AT_4AM)
+  async handleCrawlProcessJob(): Promise<void> {
+    try {
+      // Check if worker is already running
+      if (this.workerManager.isWorkerRunning(CRAWL_PROCESS_WORKER_NAME)) {
+        logger.warn('[ScrollJobScheduler] Crawl process worker is already running, skipping...');
 
-  //       return;
-  //     }
+        return;
+      }
 
-  //     logger.info('[ScrollJobScheduler] Starting crawl process job via cron schedule');
-  //     this.workerManager.startJob(CRAWL_PROCESS_WORKER_NAME).catch((error) => {
-  //       logger.error(`[ScrollJobScheduler] Error in crawl process job: ${error}`);
-  //     });
-  //   } catch (error) {
-  //     logger.error(`[ScrollJobScheduler] Error starting crawl process job: ${error}`);
-  //   }
-  // }
+      logger.info('[ScrollJobScheduler] Starting crawl process job via cron schedule');
+      this.workerManager.startJob(CRAWL_PROCESS_WORKER_NAME).catch((error) => {
+        logger.error(`[ScrollJobScheduler] Error in crawl process job: ${error}`);
+      });
+    } catch (error) {
+      logger.error(`[ScrollJobScheduler] Error starting crawl process job: ${error}`);
+    }
+  }
 
   // @Cron(CronExpression.EVERY_8_HOURS) // Runs at 0:00, 8:00, 16:00
   // async handleCrawlPostJob(): Promise<void> {

@@ -2,13 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { CrawlProcessEntity, CrawlProcessStatus } from 'database/entities/crawlProcess.entity';
 import { CrawlProcessRepository } from 'database/repositories/crawlProcess.repository';
 import { CrawlProcessDetailRepository } from 'database/repositories/crawlProcessDetail.repository';
+import * as dayjsModule from 'dayjs';
+
+const dayjs = (dayjsModule as { default?: typeof dayjsModule }).default ?? dayjsModule;
 import { logger } from 'shared/logger/app.logger';
 
 import { getPageCrawl, TARGET_PAGE_CRAWL_URL } from '../shared/constants/app.constant';
 import { ThirdPartyApiService } from '../shared/services/third-party-api.service';
 import { parseDetailUrlsFromHtml, parsePaginationFromHtml } from '../shared/utils/parser-html.util';
 import { parseLastUpdated } from '../shared/utils/parser-post.utils';
-import { CONCURRENCY_CRAWL_PAGE } from './crawl-process.constant';
 import { StatsCrawl } from './crawl-process.type';
 
 @Injectable()
@@ -30,14 +32,13 @@ export class CrawlProcessService {
 
     try {
       const statsCurrent = await this.getStatsCrawl();
-      const { pageFrom, pageTo, lastedAt, hasNewPage, pageFound } = await this.calculateStatsCrawl({ ...statsCurrent });
+      const { pageFrom, pageTo, lastedAt, pageFound } = statsCurrent;
+      const crawlProcessLatest = await this.crawlProcessRepository.findCrawlProcessLatest();
 
-      if (!hasNewPage) {
-        logger.info('No new page found, skipping');
-        await this.crawlProcessRepository.setStatusCrawlProcess(crawlProcess.id, CrawlProcessStatus.SKIP);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const lastedAtFromCrawlProcessLatest = dayjs(crawlProcessLatest!.lastedAt).subtract(1, 'day');
 
-        return;
-      }
+      logger.info('Start time', lastedAtFromCrawlProcessLatest.format('YYYY-MM-DD HH:mm:ss'));
 
       await this.crawlProcessRepository.updateAndGetCrawlProcess(crawlProcess.id, {
         range: { pageFrom, pageTo, pageFound },
@@ -46,13 +47,22 @@ export class CrawlProcessService {
       });
 
       const pages = Array.from({ length: pageTo - pageFrom + 1 }, (_, i) => pageFrom + i);
-      const batchCount = Math.ceil(pages.length / CONCURRENCY_CRAWL_PAGE);
-      const batches = Array.from({ length: batchCount }, (_, i) =>
-        pages.slice(i * CONCURRENCY_CRAWL_PAGE, (i + 1) * CONCURRENCY_CRAWL_PAGE),
-      );
 
-      for (const batch of batches) {
-        await Promise.all(batch.map((page) => this.onCrawlPage(crawlProcess.id, page)));
+      for (const page of pages) {
+        const lastedAtOnPage = await this.onCrawlPage(crawlProcess.id, page);
+
+        if (lastedAtOnPage) {
+          const lastedAtOnPageFormat = dayjs(lastedAtOnPage);
+          logger.info('Lasted at on page', lastedAtOnPageFormat.format('YYYY-MM-DD HH:mm:ss'));
+
+          if (!lastedAtOnPageFormat.isAfter(lastedAtFromCrawlProcessLatest)) {
+            await this.crawlProcessRepository.updateAndGetCrawlProcess(crawlProcess.id, {
+              range: { pageFrom, pageTo: page, pageFound: pageFound },
+              lastedAt: lastedAtOnPage,
+            });
+            break;
+          }
+        }
       }
 
       const stats = await this.crawlProcessRepository.calculateStats(crawlProcess.id);
@@ -126,7 +136,7 @@ export class CrawlProcessService {
     };
   }
 
-  private async onCrawlPage(crawlProcessId: number, page: number): Promise<void> {
+  private async onCrawlPage(crawlProcessId: number, page: number) {
     const url = getPageCrawl(page);
     const { html, blocked } = await this.thirdPartyApiService.fetchHtml(url);
 
@@ -146,9 +156,13 @@ export class CrawlProcessService {
       return;
     }
 
+    const lastedAt = parseLastUpdated(html);
+
     await this.crawlProcessDetailRepository.saveCrawlProcessDetail(crawlProcessId, page, detailUrls);
 
     logger.info(`Crawl page ${page} with ${detailUrls.length} detail urls success`);
+
+    return lastedAt;
   }
 
   private async retryCrawlPageError(crawlProcess: CrawlProcessEntity, maxRetries = 3): Promise<void> {
@@ -159,13 +173,8 @@ export class CrawlProcessService {
         return;
       }
 
-      const batchCount = Math.ceil(pageCrawlError.length / CONCURRENCY_CRAWL_PAGE);
-      const batches = Array.from({ length: batchCount }, (_, i) =>
-        pageCrawlError.slice(i * CONCURRENCY_CRAWL_PAGE, (i + 1) * CONCURRENCY_CRAWL_PAGE),
-      );
-
-      for (const batch of batches) {
-        await Promise.all(batch.map((page) => this.onCrawlPage(crawlProcess.id, page)));
+      for (const page of pageCrawlError) {
+        await this.onCrawlPage(crawlProcess.id, page);
       }
 
       // After retry, check if there are still error pages
