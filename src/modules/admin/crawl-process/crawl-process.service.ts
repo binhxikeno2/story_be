@@ -38,7 +38,7 @@ export class CrawlProcessService {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const lastedAtFromCrawlProcessLatest = dayjs(crawlProcessLatest!.lastedAt).subtract(1, 'day');
 
-      logger.info('Start time:', lastedAtFromCrawlProcessLatest.format('YYYY-MM-DD HH:mm:ss'));
+      logger.info('Start time:', lastedAtFromCrawlProcessLatest.format('YYYY-MM-DD HH:mm:ss').toString());
 
       await this.crawlProcessRepository.updateAndGetCrawlProcess(crawlProcess.id, {
         range: { pageFrom, pageTo, pageFound },
@@ -53,7 +53,7 @@ export class CrawlProcessService {
 
         if (lastedAtOnPage) {
           const lastedAtOnPageFormat = dayjs(lastedAtOnPage);
-          logger.info('Lasted at on page', lastedAtOnPageFormat.format('YYYY-MM-DD HH:mm:ss'));
+          logger.info('Lasted at on page', lastedAtOnPageFormat.format('YYYY-MM-DD HH:mm:ss').toString());
 
           if (!lastedAtOnPageFormat.isAfter(lastedAtFromCrawlProcessLatest)) {
             await this.crawlProcessRepository.updateAndGetCrawlProcess(crawlProcess.id, {
