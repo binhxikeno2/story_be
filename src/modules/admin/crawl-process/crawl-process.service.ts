@@ -58,7 +58,7 @@ export class CrawlProcessService {
           if (!lastedAtOnPageFormat.isAfter(lastedAtFromCrawlProcessLatest)) {
             await this.crawlProcessRepository.updateAndGetCrawlProcess(crawlProcess.id, {
               range: { pageFrom, pageTo: page, pageFound: pageFound },
-              lastedAt: lastedAtOnPage,
+              lastedAt: statsCurrent.lastedAt,
             });
             break;
           }
