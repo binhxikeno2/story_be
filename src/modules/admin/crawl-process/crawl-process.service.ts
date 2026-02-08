@@ -65,6 +65,8 @@ export class CrawlProcessService {
         }
       }
 
+      this.crawlProcessRepository.updateStats(crawlProcess.id);
+
       const stats = await this.crawlProcessRepository.calculateStats(crawlProcess.id);
 
       if (stats.crawled < stats.totalPage) {

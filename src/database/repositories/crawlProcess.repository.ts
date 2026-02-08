@@ -74,6 +74,14 @@ export class CrawlProcessRepository extends BaseRepository<CrawlProcessEntity> {
     await this.getRepository().update(id, { status });
   }
 
+  public async updateStats(id: number): Promise<void> {
+    const stats = await this.calculateStats(id);
+
+    await this.getRepository().update(id, {
+      stats,
+    });
+  }
+
   public async setDone(id: number): Promise<void> {
     const stats = await this.calculateStats(id);
 
