@@ -25,7 +25,7 @@ export class StoryRepository extends BaseRepository<StoryEntity> {
     return this.createQueryBuilder('story')
       .select('story.id', 'id')
       .addSelect('story.rapid_gator_url', 'rapidGatorUrl')
-      .where('story.internal_url IS NULL')
+      .where('(story.internal_url IS NULL OR story.internal_url = "")')
       .andWhere('story.rapid_gator_url IS NOT NULL')
       .orderBy('story.id', 'ASC')
       .limit(LIMIT_STORY)

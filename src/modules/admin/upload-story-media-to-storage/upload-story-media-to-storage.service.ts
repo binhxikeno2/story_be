@@ -20,7 +20,6 @@ export class UploadStoryMediaToStorageService {
   public async uploadStoryMediaToStorage(): Promise<void> {
     try {
       const storiesWithEmptyInternalUrl = await this.storyRepository.getStoriesWithEmptyInternalUrl();
-
       const batchCount = Math.ceil(storiesWithEmptyInternalUrl.length / CONCURRENCY_UPLOAD_STORY_MEDIA);
       const batches = Array.from({ length: batchCount }, (_, i) =>
         storiesWithEmptyInternalUrl.slice(i * CONCURRENCY_UPLOAD_STORY_MEDIA, (i + 1) * CONCURRENCY_UPLOAD_STORY_MEDIA),
