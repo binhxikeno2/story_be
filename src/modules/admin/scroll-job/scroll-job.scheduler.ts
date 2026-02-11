@@ -5,8 +5,6 @@ import { WorkerManager } from 'shared/worker/worker.manager';
 
 import { CRAWL_POST_WORKER_NAME } from '../crawl-post/crawl-post.constant';
 import { CRAWL_PROCESS_WORKER_NAME } from '../crawl-process/crawl-process.constant';
-import { SYNC_TO_WP_WORKER_NAME } from '../sync-to-wp/sync-to-wp.constant';
-import { UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME } from '../upload-story-media-to-storage/upload-story-media-to-storage.constant';
 import { UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME } from '../upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
 
 @Injectable()
@@ -33,7 +31,7 @@ export class ScrollJobScheduler {
     }
   }
 
-  @Cron(CronExpression.EVERY_4_HOURS)
+  @Cron(CronExpression.EVERY_3_HOURS)
   async handleCrawlPostJob(): Promise<void> {
     try {
       if (this.workerManager.isWorkerRunning(CRAWL_POST_WORKER_NAME)) {
@@ -87,39 +85,39 @@ export class ScrollJobScheduler {
     }
   }
 
-  @Cron(CronExpression.EVERY_4_HOURS) // Runs at 6:00, 14:00, 22:00 (every 8 hours, offset by 6 hours)
-  async handleUploadStoryMediaToStorageJob(): Promise<void> {
-    try {
-      if (this.workerManager.isWorkerRunning(UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME)) {
-        logger.warn('[ScrollJobScheduler] Upload story media to storage worker is already running, skipping...');
+  // @Cron(CronExpression.EVERY_4_HOURS) // Runs at 6:00, 14:00, 22:00 (every 8 hours, offset by 6 hours)
+  // async handleUploadStoryMediaToStorageJob(): Promise<void> {
+  //   try {
+  //     if (this.workerManager.isWorkerRunning(UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME)) {
+  //       logger.warn('[ScrollJobScheduler] Upload story media to storage worker is already running, skipping...');
 
-        return;
-      }
+  //       return;
+  //     }
 
-      logger.info('[ScrollJobScheduler] Starting upload story media to storage job via cron schedule');
-      this.workerManager.startJob(UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME).catch((error) => {
-        logger.error(`[ScrollJobScheduler] Error in upload story media to storage job: ${error}`);
-      });
-    } catch (error) {
-      logger.error(`[ScrollJobScheduler] Error starting upload story media to storage job: ${error}`);
-    }
-  }
+  //     logger.info('[ScrollJobScheduler] Starting upload story media to storage job via cron schedule');
+  //     this.workerManager.startJob(UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME).catch((error) => {
+  //       logger.error(`[ScrollJobScheduler] Error in upload story media to storage job: ${error}`);
+  //     });
+  //   } catch (error) {
+  //     logger.error(`[ScrollJobScheduler] Error starting upload story media to storage job: ${error}`);
+  //   }
+  // }
 
-  @Cron(CronExpression.EVERY_DAY_AT_9PM)
-  async handleSyncToWpJob(): Promise<void> {
-    try {
-      if (this.workerManager.isWorkerRunning(SYNC_TO_WP_WORKER_NAME)) {
-        logger.warn('[ScrollJobScheduler] Sync to WP worker is already running, skipping...');
+  // @Cron(CronExpression.EVERY_DAY_AT_9PM)
+  // async handleSyncToWpJob(): Promise<void> {
+  //   try {
+  //     if (this.workerManager.isWorkerRunning(SYNC_TO_WP_WORKER_NAME)) {
+  //       logger.warn('[ScrollJobScheduler] Sync to WP worker is already running, skipping...');
 
-        return;
-      }
+  //       return;
+  //     }
 
-      logger.info('[ScrollJobScheduler] Starting sync to WP job via cron schedule');
-      this.workerManager.startJob(SYNC_TO_WP_WORKER_NAME).catch((error) => {
-        logger.error(`[ScrollJobScheduler] Error in sync to WP job: ${error}`);
-      });
-    } catch (error) {
-      logger.error(`[ScrollJobScheduler] Error starting sync to WP job: ${error}`);
-    }
-  }
+  //     logger.info('[ScrollJobScheduler] Starting sync to WP job via cron schedule');
+  //     this.workerManager.startJob(SYNC_TO_WP_WORKER_NAME).catch((error) => {
+  //       logger.error(`[ScrollJobScheduler] Error in sync to WP job: ${error}`);
+  //     });
+  //   } catch (error) {
+  //     logger.error(`[ScrollJobScheduler] Error starting sync to WP job: ${error}`);
+  //   }
+  // }
 }
