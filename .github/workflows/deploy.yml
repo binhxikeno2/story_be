@@ -30,7 +30,7 @@ jobs:
           echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env
           echo "TARGET_CRAWL_HOST=${{ secrets.TARGET_CRAWL_HOST }}" >> .env
           echo "RAPIDGATOR_USERNAME=${{ secrets.RAPIDGATOR_USERNAME }}" >> .env
-          echo "RAPIDGATOR_PASSWORD=${{ secrets.RAPIDGATOR_PASSWORD }}" >> .env
+          echo "RAPIDGATOR_PASSWORD='${{ secrets.RAPIDGATOR_PASSWORD }}'" >> .env
           echo "RAPIDGATOR_DOWNLOAD_PATH=${{ secrets.RAPIDGATOR_DOWNLOAD_PATH }}" >> .env
           echo "SCRAPPY_KEY_API=${{ secrets.SCRAPPY_KEY_API }}" >> .env
           echo "HETZNER_S3_ACCESS_KEY=${{ secrets.HETZNER_S3_ACCESS_KEY }}" >> .env

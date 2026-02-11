@@ -117,7 +117,7 @@ export class PostRepository extends BaseRepository<PostEntity> {
             }
 
             return chapter.stories.every(
-              (story) => story.internalUrl != null && story.internalUrl !== '' && story.internalUrl !== 'NOT_FOUND',
+              (story) => story.internalUrl != null && story.internalUrl !== '' && story.deletedAt == null,
             );
           });
         });

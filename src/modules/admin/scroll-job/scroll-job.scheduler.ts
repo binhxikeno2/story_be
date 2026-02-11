@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { logger } from 'shared/logger/app.logger';
 import { WorkerManager } from 'shared/worker/worker.manager';
 
+import { CRAWL_LINK_MEDIA_WORKER_NAME } from '../crawl-link-media/crawl-link-media.constant';
 import { CRAWL_POST_WORKER_NAME } from '../crawl-post/crawl-post.constant';
 import { CRAWL_PROCESS_WORKER_NAME } from '../crawl-process/crawl-process.constant';
 import { UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME } from '../upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
@@ -49,23 +50,23 @@ export class ScrollJobScheduler {
     }
   }
 
-  // @Cron('0 4,12,20 * * *') // Runs at 4:00, 12:00, 20:00 (every 8 hours, offset by 4 hours)
-  // async handleCrawlLinkMediaJob(): Promise<void> {
-  //   try {
-  //     if (this.workerManager.isWorkerRunning(CRAWL_LINK_MEDIA_WORKER_NAME)) {
-  //       logger.warn('[ScrollJobScheduler] Crawl link media worker is already running, skipping...');
+  @Cron('0 4,12,20 * * *') // Runs at 4:00, 12:00, 20:00 (every 8 hours, offset by 4 hours)
+  async handleCrawlLinkMediaJob(): Promise<void> {
+    try {
+      if (this.workerManager.isWorkerRunning(CRAWL_LINK_MEDIA_WORKER_NAME)) {
+        logger.warn('[ScrollJobScheduler] Crawl link media worker is already running, skipping...');
 
-  //       return;
-  //     }
+        return;
+      }
 
-  //     logger.info('[ScrollJobScheduler] Starting crawl link media job via cron schedule');
-  //     this.workerManager.startJob(CRAWL_LINK_MEDIA_WORKER_NAME).catch((error) => {
-  //       logger.error(`[ScrollJobScheduler] Error in crawl link media job: ${error}`);
-  //     });
-  //   } catch (error) {
-  //     logger.error(`[ScrollJobScheduler] Error starting crawl link media job: ${error}`);
-  //   }
-  // }
+      logger.info('[ScrollJobScheduler] Starting crawl link media job via cron schedule');
+      this.workerManager.startJob(CRAWL_LINK_MEDIA_WORKER_NAME).catch((error) => {
+        logger.error(`[ScrollJobScheduler] Error in crawl link media job: ${error}`);
+      });
+    } catch (error) {
+      logger.error(`[ScrollJobScheduler] Error starting crawl link media job: ${error}`);
+    }
+  }
 
   @Cron(CronExpression.EVERY_4_HOURS) // Runs at 2:00, 10:00, 18:00 (every 8 hours, offset by 2 hours)
   async handleUploadThumbnailPostToStorageJob(): Promise<void> {

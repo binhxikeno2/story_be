@@ -21,7 +21,7 @@ export class RapidGatorDownloadService {
 
   async getDocumentFromRapidGator(
     url: string,
-  ): Promise<{ data: Uint8Array | null; contentType: string; extension: string }> {
+  ): Promise<{ data: Uint8Array | null; contentType: string; extension: string; notFound?: boolean }> {
     let sessionId = await this.ensureSessionId();
     let data = await this.fetchDownloadUrl(url, sessionId);
 
@@ -35,8 +35,12 @@ export class RapidGatorDownloadService {
       }
     }
 
-    if ([404, 401].includes(data.responseStatus || 0)) {
+    if (data.responseStatus === 401) {
       return { data: null, contentType: '', extension: '' };
+    }
+
+    if (data.responseStatus === 404) {
+      return { data: null, contentType: '', extension: '', notFound: true };
     }
 
     const downloadUrl = data?.response?.url;

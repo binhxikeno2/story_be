@@ -16,6 +16,7 @@ export class StoryRepository extends BaseRepository<StoryEntity> {
       .select('story.id', 'id')
       .addSelect('story.media', 'media')
       .where('story.rapid_gator_url IS NULL')
+      .andWhere('story.deletedAt IS NULL')
       .orderBy('story.id', 'ASC')
       .limit(LIMIT_STORY)
       .getRawMany();
@@ -27,6 +28,7 @@ export class StoryRepository extends BaseRepository<StoryEntity> {
       .addSelect('story.rapid_gator_url', 'rapidGatorUrl')
       .where('(story.internal_url IS NULL OR story.internal_url = "")')
       .andWhere('story.rapid_gator_url IS NOT NULL')
+      .andWhere('story.deletedAt IS NULL')
       .orderBy('story.id', 'ASC')
       .limit(LIMIT_STORY)
       .getRawMany();

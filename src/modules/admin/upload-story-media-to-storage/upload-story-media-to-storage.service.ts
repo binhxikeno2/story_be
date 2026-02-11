@@ -30,9 +30,16 @@ export class UploadStoryMediaToStorageService {
           batch.map(async (storyWithEmptyInternalUrl) => {
             try {
               if (storyWithEmptyInternalUrl.rapidGatorUrl && storyWithEmptyInternalUrl.id) {
-                const { data, contentType, extension } = await this.rapidGatorDownloadService.getDocumentFromRapidGator(
-                  storyWithEmptyInternalUrl.rapidGatorUrl,
-                );
+                const { data, contentType, extension, notFound } =
+                  await this.rapidGatorDownloadService.getDocumentFromRapidGator(
+                    storyWithEmptyInternalUrl.rapidGatorUrl,
+                  );
+
+                if (notFound) {
+                  await this.storyRepository.softDelete(storyWithEmptyInternalUrl.id);
+
+                  return;
+                }
 
                 if (!data) {
                   await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl: '' });
