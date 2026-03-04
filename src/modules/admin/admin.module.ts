@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { AnalyticsModule } from './analytics/analytics.module';
 import { CategoryModule } from './category/category.module';
 import { CrawlLinkMediaModule } from './crawl-link-media/crawl-link-media.module';
 import { CrawlPostModule } from './crawl-post/crawl-post.module';
@@ -23,6 +24,7 @@ import { UserModule } from './user/user.module';
     UploadStoryMediaToStorageModule,
     UploadThumbnailPostToStorageModule,
     SyncToWpModule,
+    AnalyticsModule,
   ],
   controllers: [],
   providers: [],
