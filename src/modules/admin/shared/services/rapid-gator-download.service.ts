@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
 import { plainToInstanceOptions } from 'shared/constants/transform.constant';
+import { PassThrough, Readable } from 'stream';
 
 import { RAPIDGATOR_GET_SESSION_URL, RAPIDGATOR_GET_URL_DOWNLOAD } from '../constants/rapid-gator-download.constant';
 import { RapidGatorDownloadResponseDto } from '../dto/rapid-gator-download.response';
@@ -21,7 +22,13 @@ export class RapidGatorDownloadService {
 
   async getDocumentFromRapidGator(
     url: string,
-  ): Promise<{ data: Uint8Array | null; contentType: string; extension: string; notFound?: boolean }> {
+  ): Promise<{
+    data: Uint8Array | Readable | null;
+    contentType: string;
+    extension: string;
+    contentLength?: number;
+    notFound?: boolean;
+  }> {
     let sessionId = await this.ensureSessionId();
     let data = await this.fetchDownloadUrl(url, sessionId);
 
@@ -96,7 +103,9 @@ export class RapidGatorDownloadService {
     return data?.response?.sessionId || '';
   }
 
-  async downloadFile(url: string): Promise<{ data: Uint8Array; contentType: string; extension: string }> {
+  async downloadFile(
+    url: string,
+  ): Promise<{ data: Uint8Array | Readable; contentType: string; extension: string; contentLength?: number }> {
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -104,13 +113,49 @@ export class RapidGatorDownloadService {
       throw new Error(errorMessage);
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    const contentLength = response.headers.get('content-length');
+    const fileSize = contentLength ? parseInt(contentLength, 10) : 0;
+    const MAX_MEMORY_SIZE = 50 * 1024 * 1024; // 50MB threshold
 
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
     const extension = this.detectFileExtension(response, url, contentType);
 
-    return { data: uint8Array, contentType, extension };
+    if (fileSize > MAX_MEMORY_SIZE || !contentLength) {
+      // For large files or unknown size, return a stream
+      const stream = new PassThrough();
+
+      if (response.body) {
+        const reader = response.body.getReader();
+
+        const pump = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                stream.end();
+                break;
+              }
+
+              stream.write(value);
+            }
+          } catch (error) {
+            stream.destroy(error as Error);
+          }
+        };
+
+        pump();
+      } else {
+        stream.end();
+      }
+
+      return { data: stream, contentType, extension, contentLength: fileSize || undefined };
+    } else {
+      // For smaller files, load into memory
+      const arrayBuffer = await response.arrayBuffer();
+      const uint8Array = new Uint8Array(arrayBuffer);
+
+      return { data: uint8Array, contentType, extension, contentLength: fileSize };
+    }
   }
 
   private detectFileExtension(response: Response, url: string, contentType: string): string {

@@ -2,6 +2,7 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { logger } from 'shared/logger/app.logger';
+import { Readable } from 'stream';
 
 @Injectable()
 export class HetznerS3Service {
@@ -33,26 +34,34 @@ export class HetznerS3Service {
   }
 
   public async upload(params: {
-    body: Uint8Array;
+    body: Uint8Array | Readable;
     key: string;
     contentType?: string;
+    contentLength?: number;
     acl?: 'private' | 'public-read' | 'public-read-write' | 'authenticated-read';
   }): Promise<string | null> {
     if (!this.s3Client) {
       return null;
     }
 
-    const { body, key, contentType = 'application/octet-stream', acl = 'public-read' } = params;
+    const { body, key, contentType = 'application/octet-stream', contentLength, acl = 'public-read' } = params;
 
-    await this.s3Client.send(
-      new PutObjectCommand({
-        Bucket: this.s3Bucket,
-        Key: key,
-        Body: body,
-        ContentType: contentType,
-        ACL: acl,
-      }),
-    );
+    const commandInput: any = {
+      Bucket: this.s3Bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+      ACL: acl,
+    };
+
+    // Set ContentLength for better S3 API compatibility
+    if (body instanceof Uint8Array) {
+      commandInput.ContentLength = body.length;
+    } else if (contentLength) {
+      commandInput.ContentLength = contentLength;
+    }
+
+    await this.s3Client.send(new PutObjectCommand(commandInput));
 
     const s3Url = `https://${this.s3Bucket}.${this.s3Endpoint}/${key}`;
     logger.info(`[HetznerS3Service] Successfully uploaded file to ${s3Url}`);

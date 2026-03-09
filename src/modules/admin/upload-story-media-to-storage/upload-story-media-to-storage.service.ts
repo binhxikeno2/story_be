@@ -30,7 +30,7 @@ export class UploadStoryMediaToStorageService {
           batch.map(async (storyWithEmptyInternalUrl) => {
             try {
               if (storyWithEmptyInternalUrl.rapidGatorUrl && storyWithEmptyInternalUrl.id) {
-                const { data, contentType, extension, notFound } =
+                const { data, contentType, extension, contentLength, notFound } =
                   await this.rapidGatorDownloadService.getDocumentFromRapidGator(
                     storyWithEmptyInternalUrl.rapidGatorUrl,
                   );
@@ -53,6 +53,7 @@ export class UploadStoryMediaToStorageService {
                   body: data,
                   key: fileName,
                   contentType,
+                  contentLength,
                   acl: 'public-read',
                 });
 
