@@ -12,5 +12,9 @@ export class AnalyticsPostResDto {
 
   @ApiProperty()
   @Expose()
+  totalWaitingProcess: number;
+
+  @ApiProperty()
+  @Expose()
   totalPostSynced: number;
 }

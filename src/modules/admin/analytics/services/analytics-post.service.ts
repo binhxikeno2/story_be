@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ChapterEntity, StoryEntity } from 'database/entities';
 import { PostRepository } from 'database/repositories/post.repository';
 import { StoryRepository } from 'database/repositories/story.repository';
 
@@ -7,50 +8,78 @@ export class AnalyticsPostService {
   constructor(private postRepository: PostRepository, private storyRepository: StoryRepository) {}
 
   public async getAnalyticsPost() {
-    const totalPostReadyToSync = await this.postRepository
+    const totalPost = await this.postRepository
       .createQueryBuilder('post')
-      .innerJoin('post.category', 'category')
-      .orderBy('post.lastUpdated', 'DESC')
-      .addOrderBy('post.createdAt', 'DESC')
-      .andWhere("post.title IS NOT NULL AND post.title <> ''")
-      .andWhere('post.internal_thumbnail_url IS NOT NULL')
-      .andWhere('post.3happy_guy_post_id IS NULL')
-      .andWhere((qb) => {
-        const sub = qb
-          .subQuery()
-          .select('1')
-          .from('story', 's')
-          .innerJoin('chapter', 'c', 's.chapter_id = c.id')
-          .where('c.post_id = post.id')
-          .andWhere("(s.internal_url IS NULL OR s.internal_url = '')")
-          .getQuery();
-
-        return `NOT EXISTS ${sub}`;
-      })
+      .leftJoin('category', 'category', 'category.id = post.category_id')
+      .where('post.title != :title', { title: '' })
+      .andWhere('internal_thumbnail_url IS NOT NULL')
+      .groupBy('post.id')
       .getCount();
 
-    const queryData = await this.postRepository
-      .createQueryBuilder('post')
-      .select('COUNT(*)', 'totalPost')
-      .addSelect('COUNT(CASE WHEN post.id IS NOT NULL THEN 1 END)', 'totalPost')
-      .addSelect('COUNT(CASE WHEN post.3happy_guy_post_id IS NOT NULL THEN 1 END)', 'totalPostSynced')
-      .getRawOne();
+    const totalPostReadyToSync = await this.postRepository
+      .createQueryBuilder('p')
+      .where('p.category_id IS NOT NULL')
+      .andWhere('p.title IS NOT NULL')
+      .andWhere('p.internal_thumbnail_url IS NOT NULL')
+      .andWhere('p.3happy_guy_post_id IS NULL')
+      .andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('1')
+          .from(ChapterEntity, 'c')
+          .innerJoin(StoryEntity, 's', 's.chapter_id = c.id')
+          .where('c.post_id = p.id')
+          .andWhere('(s.rapid_gator_url IS NULL OR s.internal_url IS NULL)')
+          .getQuery();
 
-    return { ...queryData, totalPostReadyToSync };
+        return `NOT EXISTS ${subQuery}`;
+      })
+      .groupBy('post.id')
+      .getCount();
+
+    const totalPostSynced = await this.postRepository
+      .createQueryBuilder('post')
+      .where('post.category_id IS NOT NULL')
+      .andWhere('post.title IS NOT NULL')
+      .andWhere('post.internal_thumbnail_url IS NOT NULL')
+      .andWhere('post.3happy_guy_post_id IS NOT NULL')
+      .groupBy('post.id')
+      .getCount();
+
+    return {
+      totalPost,
+      totalPostReadyToSync,
+      totalWaitingProcess: totalPost - totalPostReadyToSync - totalPostSynced,
+      totalPostSynced,
+    };
   }
 
   public async getAnalyticsStory() {
-    const queryData = await this.storyRepository
-      .createQueryBuilder('story')
-      .select('COUNT(*)', 'totalStory')
-      .addSelect('COUNT(CASE WHEN story.rapid_gator_url IS NOT NULL THEN 1 END)', 'totalStoryCrawledRapidLink')
-      .addSelect('COUNT(CASE WHEN story.internal_url IS NOT NULL THEN 1 END)', 'totalStoryInternalLink')
-      .addSelect(
-        'COUNT(CASE WHEN story.internal_url IS NULL and story.rapid_gator_url IS NOT NULL THEN 1 END)',
-        'totalStoryReadyGetInternalLink',
-      )
-      .getRawOne();
+    const totalStory = await this.storyRepository.createQueryBuilder('story').getCount();
 
-    return queryData;
+    const totalStoryCrawledRapidLink = await this.storyRepository
+      .createQueryBuilder('story')
+      .where('story.rapid_gator_url IS NOT NULL')
+      .getCount();
+
+    const totalStoryInternalLink = await this.storyRepository
+      .createQueryBuilder('story')
+      .where('story.rapid_gator_url IS NOT NULL')
+      .andWhere('story.internal_url IS NOT NULL')
+      .getCount();
+
+    const totalStoryReadyGetInternalLink = await this.storyRepository
+      .createQueryBuilder('story')
+      .where('story.rapid_gator_url IS NOT NULL')
+      .andWhere('story.internal_url IS NOT NULL')
+      .getCount();
+
+    return {
+      totalStory,
+      totalStoryCrawledRapidLink,
+      totalStoryInternalLink,
+      totalStoryReadyGetInternalLink,
+      totalStorySynced: 0,
+    };
   }
 }

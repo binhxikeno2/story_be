@@ -17,4 +17,8 @@ export class AnalyticsStoryResDto {
   @ApiProperty()
   @Expose()
   totalStoryReadyGetInternalLink: number;
+
+  @ApiProperty()
+  @Expose()
+  totalStorySynced: number;
 }
