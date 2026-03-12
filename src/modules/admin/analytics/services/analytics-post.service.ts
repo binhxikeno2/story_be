@@ -74,12 +74,19 @@ export class AnalyticsPostService {
       .andWhere('story.internal_url IS NOT NULL')
       .getCount();
 
+    const totalStorySynced = await this.storyRepository
+      .createQueryBuilder('story')
+      .innerJoin('chapter', 'chapter', 'chapter.id = story.chapter_id')
+      .innerJoin('post', 'post', 'post.id = chapter.post_id')
+      .where('post.3happy_guy_post_id IS NOT NULL')
+      .getCount();
+
     return {
       totalStory,
       totalStoryCrawledRapidLink,
       totalStoryInternalLink,
       totalStoryReadyGetInternalLink,
-      totalStorySynced: 0,
+      totalStorySynced,
     };
   }
 }
