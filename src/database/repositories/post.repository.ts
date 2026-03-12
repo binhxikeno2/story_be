@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PostEntity } from 'database/entities';
+import { ChapterEntity, PostEntity, StoryEntity } from 'database/entities';
 import { LIMIT_POST } from 'modules/admin/upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
 import { Pagination } from 'shared/dto/response.dto';
 import { DataSource } from 'typeorm';
@@ -95,32 +95,24 @@ export class PostRepository extends BaseRepository<PostEntity> {
   }
 
   public async getPostsToSync(): Promise<PostEntity[]> {
-    return this.createQueryBuilder('post')
-      .leftJoinAndSelect('post.category', 'category')
-      .leftJoinAndSelect('post.tags', 'tags')
-      .leftJoinAndSelect('post.chapters', 'chapters')
-      .leftJoinAndSelect('chapters.stories', 'stories')
-      .where('category.threeHappyGuyCategoryId IS NOT NULL')
-      .andWhere('post.threeHappyGuyPostId IS NULL')
-      .andWhere("post.title IS NOT NULL AND post.title <> ''")
-      .getMany()
-      .then((posts) => {
-        // Filter posts where all stories have internalUrl and internalUrl is not "NOT_FOUND"
-        return posts.filter((post) => {
-          if (!post.chapters || post.chapters.length === 0) {
-            return false;
-          }
+    return this.createQueryBuilder('p')
+      .where('p.category_id IS NOT NULL')
+      .andWhere('p.title IS NOT NULL')
+      .andWhere('p.internal_thumbnail_url IS NOT NULL')
+      .andWhere('p.3happy_guy_post_id IS NULL')
+      .andWhere((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('1')
+          .from(ChapterEntity, 'c')
+          .innerJoin(StoryEntity, 's', 's.chapter_id = c.id')
+          .where('c.post_id = p.id')
+          .andWhere('(s.rapid_gator_url IS NULL OR s.internal_url IS NULL)')
+          .getQuery();
 
-          return post.chapters.every((chapter) => {
-            if (!chapter.stories || chapter.stories.length === 0) {
-              return false;
-            }
-
-            return chapter.stories.every(
-              (story) => story.internalUrl != null && story.internalUrl !== '' && story.deletedAt == null,
-            );
-          });
-        });
-      });
+        return `NOT EXISTS ${subQuery}`;
+      })
+      .groupBy('p.id')
+      .getMany();
   }
 }
