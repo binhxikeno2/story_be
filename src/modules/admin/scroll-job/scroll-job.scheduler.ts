@@ -106,7 +106,7 @@ export class ScrollJobScheduler {
     }
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_9PM)
+  @Cron(CronExpression.EVERY_4_HOURS)
   async handleSyncToWpJob(): Promise<void> {
     try {
       if (this.workerManager.isWorkerRunning(SYNC_TO_WP_WORKER_NAME)) {
