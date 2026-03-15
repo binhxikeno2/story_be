@@ -94,14 +94,17 @@ export class PostRepository extends BaseRepository<PostEntity> {
     return queryBuilder;
   }
 
-  public async getPostsToSync(): Promise<PostEntity[]> {
+  public queryPostReadyToSync() {
     return this.createQueryBuilder('p')
+      .innerJoin('chapter', 'c', 'c.post_id = p.id')
+      .innerJoin('story', 's', 's.chapter_id = c.id')
       .where('p.category_id IS NOT NULL')
       .andWhere('p.title IS NOT NULL')
       .andWhere('p.internal_thumbnail_url IS NOT NULL')
       .andWhere('p.3happy_guy_post_id IS NULL')
+      .andWhere('s.id IS NOT NULL')
       .andWhere((qb) => {
-        const subQuery = qb
+        const invalidStory = qb
           .subQuery()
           .select('1')
           .from(ChapterEntity, 'c')
@@ -110,9 +113,14 @@ export class PostRepository extends BaseRepository<PostEntity> {
           .andWhere('(s.rapid_gator_url IS NULL OR s.internal_url IS NULL)')
           .getQuery();
 
-        return `NOT EXISTS ${subQuery}`;
+        return `NOT EXISTS ${invalidStory}`;
       })
-      .groupBy('p.id')
-      .getMany();
+      .groupBy('post.id');
+  }
+
+  public async getPostsToSync(): Promise<PostEntity[]> {
+    const query = this.queryPostReadyToSync();
+
+    return query.getMany();
   }
 }

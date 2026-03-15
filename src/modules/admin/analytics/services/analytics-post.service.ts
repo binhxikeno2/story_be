@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { ChapterEntity, StoryEntity } from 'database/entities';
 import { PostRepository } from 'database/repositories/post.repository';
 import { StoryRepository } from 'database/repositories/story.repository';
 
@@ -16,26 +15,8 @@ export class AnalyticsPostService {
       .groupBy('post.id')
       .getCount();
 
-    const totalPostReadyToSync = await this.postRepository
-      .createQueryBuilder('p')
-      .where('p.category_id IS NOT NULL')
-      .andWhere('p.title IS NOT NULL')
-      .andWhere('p.internal_thumbnail_url IS NOT NULL')
-      .andWhere('p.3happy_guy_post_id IS NULL')
-      .andWhere((qb) => {
-        const subQuery = qb
-          .subQuery()
-          .select('1')
-          .from(ChapterEntity, 'c')
-          .innerJoin(StoryEntity, 's', 's.chapter_id = c.id')
-          .where('c.post_id = p.id')
-          .andWhere('(s.rapid_gator_url IS NULL OR s.internal_url IS NULL)')
-          .getQuery();
-
-        return `NOT EXISTS ${subQuery}`;
-      })
-      .groupBy('post.id')
-      .getCount();
+    const queryGetPostReadyToSync = this.postRepository.queryPostReadyToSync();
+    const totalPostReadyToSync = await queryGetPostReadyToSync.getCount();
 
     const totalPostSynced = await this.postRepository
       .createQueryBuilder('post')
