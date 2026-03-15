@@ -115,12 +115,12 @@ export class PostRepository extends BaseRepository<PostEntity> {
 
         return `NOT EXISTS ${invalidStory}`;
       })
-      .groupBy('post.id');
+      .groupBy('p.id');
   }
 
   public async getPostsToSync(): Promise<PostEntity[]> {
     const query = this.queryPostReadyToSync();
 
-    return query.getMany();
+    return await query.getMany();
   }
 }
