@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ChapterEntity, PostEntity, StoryEntity } from 'database/entities';
 import { LIMIT_POST } from 'modules/admin/upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
 import { Pagination } from 'shared/dto/response.dto';
-import { DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
 
 import { BaseRepository } from './base.repository';
 
@@ -121,6 +121,22 @@ export class PostRepository extends BaseRepository<PostEntity> {
   public async getPostsToSync(): Promise<PostEntity[]> {
     const query = this.queryPostReadyToSync();
 
-    return await query.getMany();
+    const posts = await query.select('p.id').getRawMany();
+
+    const ids = posts.map((p) => p.p_id);
+
+    if (!ids.length) {
+      return [];
+    }
+
+    return this.find({
+      where: { id: In(ids) },
+      relations: {
+        category: true,
+        chapters: {
+          stories: true,
+        },
+      },
+    });
   }
 }

@@ -66,6 +66,7 @@ export class SyncToPostService {
 
         const formattedPosts = this.formatPostsForWordPress(batch);
         const apiResponse = await this.createPostsInWordPress(formattedPosts);
+
         await this.updatePostsWithWordPressIds(batch, apiResponse.created);
       }
 
