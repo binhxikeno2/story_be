@@ -45,8 +45,8 @@ export class AnalyticsPostService {
 
     const totalStoryInternalLink = await this.storyRepository
       .createQueryBuilder('story')
-      .where('story.rapid_gator_url IS NOT NULL')
-      .andWhere('story.internal_url IS NOT NULL')
+      .where('story.internal_url IS NOT NULL')
+      .andWhere('story.internal_url != ""')
       .getCount();
 
     const totalStoryReadyGetInternalLink = await this.storyRepository
