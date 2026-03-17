@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ChapterEntity, PostEntity, StoryEntity } from 'database/entities';
+import { PostEntity } from 'database/entities';
 import { LIMIT_POST } from 'modules/admin/upload-thumbnail-post-to-storage/upload-thumbnail-post-to-storage.constant';
 import { Pagination } from 'shared/dto/response.dto';
 import { DataSource, In } from 'typeorm';
@@ -95,27 +95,43 @@ export class PostRepository extends BaseRepository<PostEntity> {
   }
 
   public queryPostReadyToSync() {
-    return this.createQueryBuilder('p')
-      .innerJoin('chapter', 'c', 'c.post_id = p.id')
-      .innerJoin('story', 's', 's.chapter_id = c.id')
-      .where('p.category_id IS NOT NULL')
-      .andWhere('p.title IS NOT NULL')
-      .andWhere('p.internal_thumbnail_url IS NOT NULL')
-      .andWhere('p.3happy_guy_post_id IS NULL')
-      .andWhere('s.id IS NOT NULL')
-      .andWhere((qb) => {
-        const invalidStory = qb
-          .subQuery()
-          .select('1')
-          .from(ChapterEntity, 'c')
-          .innerJoin(StoryEntity, 's', 's.chapter_id = c.id')
-          .where('c.post_id = p.id')
-          .andWhere('(s.rapid_gator_url IS NULL OR s.internal_url IS NULL)')
-          .getQuery();
+    return (
+      this.createQueryBuilder('p')
+        .innerJoin('p.chapters', 'c')
+        .innerJoin('c.stories', 's')
 
-        return `NOT EXISTS ${invalidStory}`;
-      })
-      .groupBy('p.id');
+        // Post conditions
+        .where('p.categoryId IS NOT NULL')
+        .andWhere('p.title IS NOT NULL')
+        .andWhere("p.title <> ''")
+        .andWhere('p.internalThumbnailUrl IS NOT NULL')
+        .andWhere('p.threeHappyGuyPostId IS NULL')
+        .andWhere('s.internalUrl IS NOT NULL')
+        .andWhere("s.internalUrl <> ''")
+        .distinct(true)
+    );
+
+    // return this.createQueryBuilder('p')
+    //   .innerJoin('chapter', 'c', 'c.post_id = p.id')
+    //   .innerJoin('story', 's', 's.chapter_id = c.id')
+    //   .where('p.category_id IS NOT NULL')
+    //   .andWhere('p.title IS NOT NULL')
+    //   .andWhere('p.internal_thumbnail_url IS NOT NULL')
+    //   .andWhere('p.3happy_guy_post_id IS NULL')
+    //   .andWhere('s.id IS NOT NULL')
+    //   .andWhere((qb) => {
+    //     const invalidStory = qb
+    //       .subQuery()
+    //       .select('1')
+    //       .from(ChapterEntity, 'c')
+    //       .innerJoin(StoryEntity, 's', 's.chapter_id = c.id')
+    //       .where('c.post_id = p.id')
+    //       .andWhere('(s.internal_url IS NULL)')
+    //       .getQuery();
+
+    //     return `NOT EXISTS ${invalidStory}`;
+    //   })
+    //   .groupBy('p.id');
   }
 
   public async getPostsToSync(): Promise<PostEntity[]> {
@@ -133,6 +149,7 @@ export class PostRepository extends BaseRepository<PostEntity> {
       where: { id: In(ids) },
       relations: {
         category: true,
+        tags: true,
         chapters: {
           stories: true,
         },

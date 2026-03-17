@@ -97,8 +97,8 @@ export class SyncToPostService {
         .filter((id): id is number => id != null && id !== undefined),
       thumbnailUrl: post.internalThumbnailUrl || '',
       myId: post.id,
-      chapters: (post.chapters || [])
-        .map((chapter) => ({
+      chapters: post?.chapters
+        ?.map((chapter) => ({
           title: chapter.title,
           stories: (chapter.stories || [])
             .filter(
