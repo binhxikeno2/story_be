@@ -58,6 +58,9 @@ export class UploadStoryMediaToStorageService {
                 });
 
                 if (internalUrl) {
+                  logger.info(
+                    `[UploadStoryMediaToStorageService] Successfully uploaded media for story id=${storyWithEmptyInternalUrl.id} to storage. Internal URL: ${internalUrl}`,
+                  );
                   await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl });
                 }
               }
