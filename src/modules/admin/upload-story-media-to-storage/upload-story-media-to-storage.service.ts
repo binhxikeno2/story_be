@@ -36,6 +36,7 @@ export class UploadStoryMediaToStorageService {
                   );
 
                 if (notFound) {
+                  //TODO check
                   await this.storyRepository.softDelete(storyWithEmptyInternalUrl.id);
 
                   return;
