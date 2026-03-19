@@ -15,9 +15,17 @@ export class TagRepository extends BaseRepository<TagEntity> {
       return [];
     }
 
-    const existingTags = await this.findBy({ name: In(names) });
-    const existingTagNames = new Set(existingTags.map((tag) => tag.name));
-    const newTagNames = names.filter((name) => !existingTagNames.has(name));
+    const normalize = (s: string) => s.normalize('NFKC');
+
+    const normalizedNames = names.map(normalize);
+
+    const existingTags = await this.findBy({
+      name: In(normalizedNames),
+    });
+
+    const existingTagNames = new Set(existingTags.map((tag) => normalize(tag.name)));
+
+    const newTagNames = normalizedNames.filter((name) => !existingTagNames.has(name));
 
     let allTags: TagEntity[] = [...existingTags];
 

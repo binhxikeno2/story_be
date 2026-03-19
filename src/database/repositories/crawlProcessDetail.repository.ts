@@ -67,7 +67,7 @@ export class CrawlProcessDetailRepository extends BaseRepository<CrawlProcessDet
   }
 
   public async setDone(id: number): Promise<void> {
-    await this.getRepository().update(id, { status: CrawlProcessDetailStatus.DONE });
+    await this.getRepository().update(id, { status: CrawlProcessDetailStatus.DONE, error: '' });
   }
 
   public async linkCrawlProcessDetailToPost(crawlProcessDetailId: number, postId: number): Promise<void> {

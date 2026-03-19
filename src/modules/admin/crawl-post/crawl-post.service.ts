@@ -28,11 +28,14 @@ export class CrawlPostService {
   ) {}
 
   async onCrawlPost(): Promise<void> {
-    const crawlProcessDetails = await this.crawlProcessDetailRepository.getCrawlProcessDetailWithStatus([
+    let crawlProcessDetails = await this.crawlProcessDetailRepository.getCrawlProcessDetailWithStatus([
       CrawlProcessDetailStatus.CREATED,
       CrawlProcessDetailStatus.FAILED,
     ]);
 
+    crawlProcessDetails = crawlProcessDetails.filter((detail) => detail.id === 37724);
+
+    // console.log(a, 'crawlProcessDetails')
     if (crawlProcessDetails.length === 0) {
       return;
     }
@@ -75,6 +78,7 @@ export class CrawlPostService {
         name: postInfo.category?.title,
         slug: postInfo.category?.slug,
       });
+
       const tags = await this.tagRepository.getOrCreateTags(postInfo.tags || []);
 
       const post = await this.createPost(queryRunner, postInfo, category?.id, tags);
