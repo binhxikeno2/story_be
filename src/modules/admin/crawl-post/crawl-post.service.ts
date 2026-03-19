@@ -28,12 +28,10 @@ export class CrawlPostService {
   ) {}
 
   async onCrawlPost(): Promise<void> {
-    let crawlProcessDetails = await this.crawlProcessDetailRepository.getCrawlProcessDetailWithStatus([
+    const crawlProcessDetails = await this.crawlProcessDetailRepository.getCrawlProcessDetailWithStatus([
       CrawlProcessDetailStatus.CREATED,
       CrawlProcessDetailStatus.FAILED,
     ]);
-
-    crawlProcessDetails = crawlProcessDetails.filter((detail) => detail.id === 37724);
 
     // console.log(a, 'crawlProcessDetails')
     if (crawlProcessDetails.length === 0) {
