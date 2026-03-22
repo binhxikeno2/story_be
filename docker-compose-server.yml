@@ -3,6 +3,7 @@ services:
   app:
     image: binhxikeno2/story-be:latest
     container_name: story-be-app
+    restart: unless-stopped
     ports:
       - '3003:3003'
     logging:
