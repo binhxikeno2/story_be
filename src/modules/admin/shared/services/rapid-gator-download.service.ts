@@ -150,10 +150,15 @@ export class RapidGatorDownloadService {
 
     const stream = Readable.fromWeb(response.body as any);
 
-    // // ✅ BẮT ERROR STREAM (rất quan trọng)
-    // stream.on('error', (err) => {
-    //   // console.error('Stream error:', err);
-    // });
+    stream.on('error', (err) => {
+      // eslint-disable-next-line no-console
+      console.error('Stream error:', err);
+    });
+
+    stream.on('close', () => {
+      // eslint-disable-next-line no-console
+      console.log('Stream closed');
+    });
 
     return {
       data: stream,
