@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
 import { plainToInstanceOptions } from 'shared/constants/transform.constant';
-import { PassThrough, Readable } from 'stream';
+import { Readable } from 'stream';
 
 import { RAPIDGATOR_GET_SESSION_URL, RAPIDGATOR_GET_URL_DOWNLOAD } from '../constants/rapid-gator-download.constant';
 import { RapidGatorDownloadResponseDto } from '../dto/rapid-gator-download.response';
@@ -20,9 +20,7 @@ export class RapidGatorDownloadService {
     this.apiConfig = { userName, password };
   }
 
-  async getDocumentFromRapidGator(
-    url: string,
-  ): Promise<{
+  async getDocumentFromRapidGator(url: string): Promise<{
     data: Uint8Array | Readable | null;
     contentType: string;
     extension: string;
@@ -103,59 +101,63 @@ export class RapidGatorDownloadService {
     return data?.response?.sessionId || '';
   }
 
-  async downloadFile(
-    url: string,
-  ): Promise<{ data: Uint8Array | Readable; contentType: string; extension: string; contentLength?: number }> {
-    const response = await fetch(url);
+  async downloadFile(url: string): Promise<{
+    data: Uint8Array | Readable;
+    contentType: string;
+    extension: string;
+    contentLength?: number;
+  }> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+    let response: Response;
+
+    try {
+      response = await fetch(url, {
+        signal: controller.signal,
+      });
+    } catch (err) {
+      throw new Error(`Fetch failed: ${err}`);
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
-      const errorMessage = `Failed to download file: ${response.status} ${response.statusText}`;
-      throw new Error(errorMessage);
+      throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
     }
 
     const contentLength = response.headers.get('content-length');
     const fileSize = contentLength ? parseInt(contentLength, 10) : 0;
-    const MAX_MEMORY_SIZE = 50 * 1024 * 1024; // 50MB threshold
+    const MAX_MEMORY_SIZE = 50 * 1024 * 1024;
 
     const contentType = response.headers.get('content-type') || 'application/octet-stream';
     const extension = this.detectFileExtension(response, url, contentType);
 
-    if (fileSize > MAX_MEMORY_SIZE || !contentLength) {
-      // For large files or unknown size, return a stream
-      const stream = new PassThrough();
-
-      if (response.body) {
-        const reader = response.body.getReader();
-
-        const pump = async () => {
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) {
-                stream.end();
-                break;
-              }
-
-              stream.write(value);
-            }
-          } catch (error) {
-            stream.destroy(error as Error);
-          }
-        };
-
-        pump();
-      } else {
-        stream.end();
-      }
-
-      return { data: stream, contentType, extension, contentLength: fileSize || undefined };
-    } else {
-      // For smaller files, load into memory
+    // ✅ SMALL FILE → BUFFER
+    if (fileSize > 0 && fileSize <= MAX_MEMORY_SIZE) {
       const arrayBuffer = await response.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
 
-      return { data: uint8Array, contentType, extension, contentLength: fileSize };
+      return {
+        data: new Uint8Array(arrayBuffer),
+        contentType,
+        extension,
+        contentLength: fileSize,
+      };
     }
+
+    // ✅ LARGE FILE → STREAM (🔥 FIX CORE)
+    if (!response.body) {
+      throw new Error('No response body');
+    }
+
+    const stream = Readable.fromWeb(response.body as any);
+
+    return {
+      data: stream,
+      contentType,
+      extension,
+      contentLength: fileSize || undefined,
+    };
   }
 
   private detectFileExtension(response: Response, url: string, contentType: string): string {
