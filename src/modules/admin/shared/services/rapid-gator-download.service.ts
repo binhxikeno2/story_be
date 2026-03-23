@@ -107,30 +107,28 @@ export class RapidGatorDownloadService {
     extension: string;
     contentLength?: number;
   }> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000); // 60s timeout
-
     let response: Response;
 
     try {
       response = await fetch(url, {
-        signal: controller.signal,
+        // ❗ KHÔNG set timeout ngắn
+        // để server tự control
       });
     } catch (err) {
       throw new Error(`Fetch failed: ${err}`);
-    } finally {
-      clearTimeout(timeout);
     }
 
     if (!response.ok) {
-      throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed: ${response.status} ${response.statusText}`);
     }
 
     const contentLength = response.headers.get('content-length');
     const fileSize = contentLength ? parseInt(contentLength, 10) : 0;
+
     const MAX_MEMORY_SIZE = 50 * 1024 * 1024;
 
     const contentType = response.headers.get('content-type') || 'application/octet-stream';
+
     const extension = this.detectFileExtension(response, url, contentType);
 
     // ✅ SMALL FILE → BUFFER
@@ -145,12 +143,17 @@ export class RapidGatorDownloadService {
       };
     }
 
-    // ✅ LARGE FILE → STREAM (🔥 FIX CORE)
+    // ❗ STREAM FIX
     if (!response.body) {
       throw new Error('No response body');
     }
 
     const stream = Readable.fromWeb(response.body as any);
+
+    // // ✅ BẮT ERROR STREAM (rất quan trọng)
+    // stream.on('error', (err) => {
+    //   // console.error('Stream error:', err);
+    // });
 
     return {
       data: stream,
