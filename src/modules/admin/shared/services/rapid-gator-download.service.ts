@@ -21,7 +21,7 @@ export class RapidGatorDownloadService {
   }
 
   async getDocumentFromRapidGator(url: string): Promise<{
-    data: Uint8Array | Readable | null;
+    data: Readable | null;
     contentType: string;
     extension: string;
     contentLength?: number;
@@ -101,20 +101,32 @@ export class RapidGatorDownloadService {
     return data?.response?.sessionId || '';
   }
 
+  /**
+   * 🔥 FLOW TỐI ƯU: Luôn stream + timeout 30 phút
+   * - Không buffer memory → tránh OOM
+   * - Timeout dài để server RapidGator tự control nhưng vẫn có safeguard
+   */
   async downloadFile(url: string): Promise<{
-    data: Uint8Array | Readable;
+    data: Readable;
     contentType: string;
     extension: string;
     contentLength?: number;
   }> {
-    let response: Response;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30 * 60 * 1000); // 30 phút
 
+    let response: Response;
     try {
       response = await fetch(url, {
-        // ❗ KHÔNG set timeout ngắn
-        // để server tự control
+        signal: controller.signal,
       });
-    } catch (err) {
+      clearTimeout(timeoutId);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error(`Download timeout after 30 minutes for URL: ${url}`);
+      }
+
       throw new Error(`Fetch failed: ${err}`);
     }
 
@@ -125,25 +137,10 @@ export class RapidGatorDownloadService {
     const contentLength = response.headers.get('content-length');
     const fileSize = contentLength ? parseInt(contentLength, 10) : 0;
 
-    const MAX_MEMORY_SIZE = 50 * 1024 * 1024;
-
     const contentType = response.headers.get('content-type') || 'application/octet-stream';
 
     const extension = this.detectFileExtension(response, url, contentType);
 
-    // ✅ SMALL FILE → BUFFER
-    if (fileSize > 0 && fileSize <= MAX_MEMORY_SIZE) {
-      const arrayBuffer = await response.arrayBuffer();
-
-      return {
-        data: new Uint8Array(arrayBuffer),
-        contentType,
-        extension,
-        contentLength: fileSize,
-      };
-    }
-
-    // ❗ STREAM FIX
     if (!response.body) {
       throw new Error('No response body');
     }
