@@ -31,9 +31,10 @@ export class StoryRepository extends BaseRepository<StoryEntity> {
         .andWhere('story.rapid_gator_url IS NOT NULL')
         .andWhere('story.deletedAt IS NULL')
         //TODO need to improve
-        .andWhere('story.title NOT LIKE :mb', { mb: '%MB%' })
+        .andWhere('story.title NOT LIKE :gb', { gb: '%GB%' })
 
-        .orderBy('story.id', 'ASC')
+        // .orderBy('story.id', 'ASC')
+        .orderBy(`CAST(REGEXP_SUBSTR(story.title, '[0-9]+(?= MB)') AS UNSIGNED)`, 'ASC')
         .limit(LIMIT_STORY)
         .getRawMany()
     );
