@@ -3,6 +3,7 @@ import { PostRepository } from 'database/repositories/post.repository';
 import { StoryRepository } from 'database/repositories/story.repository';
 import { logger } from 'shared/logger/app.logger';
 import { generateUniqueFileName } from 'shared/utils/generate-unique-filename.util';
+import { Readable } from 'stream';
 
 import { HetznerS3Service } from '../shared/services/hetzner-s3.service';
 import { RapidGatorDownloadService } from '../shared/services/rapid-gator-download.service';
@@ -30,39 +31,39 @@ export class UploadStoryMediaToStorageService {
           batch.map(async (storyWithEmptyInternalUrl) => {
             try {
               if (storyWithEmptyInternalUrl.rapidGatorUrl && storyWithEmptyInternalUrl.id) {
-                const { data, contentType, extension, contentLength, notFound } =
-                  await this.rapidGatorDownloadService.getDocumentFromRapidGator(
-                    storyWithEmptyInternalUrl.rapidGatorUrl,
-                  );
+                const { file, statusCode } = await this.rapidGatorDownloadService.getDocumentFromRapidGator(
+                  storyWithEmptyInternalUrl.rapidGatorUrl,
+                );
 
-                if (notFound) {
-                  //TODO check
+                if (statusCode === 403) {
                   await this.storyRepository.softDelete(storyWithEmptyInternalUrl.id);
 
                   return;
                 }
 
-                if (!data) {
-                  await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl: '' });
-
-                  return;
+                if (statusCode === 401) {
+                  throw new Error('Unauthorized download for rapidgator');
                 }
 
-                const fileName = generateUniqueFileName('story', extension);
+                if (file) {
+                  const { data, contentType, extension, contentLength } = file;
 
-                const internalUrl = await this.hetznerS3Service.upload({
-                  body: data,
-                  key: fileName,
-                  contentType,
-                  contentLength,
-                  acl: 'public-read',
-                });
+                  const fileName = generateUniqueFileName('story', extension);
 
-                if (internalUrl) {
-                  logger.info(
-                    `[UploadStoryMediaToStorageService] Successfully uploaded media for story id=${storyWithEmptyInternalUrl.id} to storage. Internal URL: ${internalUrl}`,
-                  );
-                  await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl });
+                  const internalUrl = await this.hetznerS3Service.upload({
+                    body: data as Readable,
+                    key: fileName,
+                    contentType,
+                    contentLength,
+                    acl: 'public-read',
+                  });
+
+                  if (internalUrl) {
+                    logger.info(
+                      `[UploadStoryMediaToStorageService] Successfully uploaded media for story id=${storyWithEmptyInternalUrl.id} to storage. Internal URL: ${internalUrl}`,
+                    );
+                    await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl });
+                  }
                 }
               }
             } catch (error) {

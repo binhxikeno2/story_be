@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
 import { plainToInstance } from 'class-transformer';
 import { plainToInstanceOptions } from 'shared/constants/transform.constant';
 import { Readable } from 'stream';
@@ -20,19 +21,13 @@ export class RapidGatorDownloadService {
     this.apiConfig = { userName, password };
   }
 
-  async getDocumentFromRapidGator(url: string): Promise<{
-    data: Readable | null;
-    contentType: string;
-    extension: string;
-    contentLength?: number;
-    notFound?: boolean;
-  }> {
-    let sessionId = await this.ensureSessionId();
+  async fetchURLFromRapid(url: string) {
+    let sessionId = await this.authenticationSession();
     let data = await this.fetchDownloadUrl(url, sessionId);
 
     if (data.responseStatus === 403) {
       this.sessionId = null;
-      sessionId = await this.ensureSessionId();
+      sessionId = await this.authenticationSession();
       data = await this.fetchDownloadUrl(url, sessionId);
 
       if (data.responseStatus === 403) {
@@ -40,12 +35,22 @@ export class RapidGatorDownloadService {
       }
     }
 
-    if (data.responseStatus === 401) {
-      return { data: null, contentType: '', extension: '' };
-    }
+    return data;
+  }
 
-    if (data.responseStatus === 404) {
-      return { data: null, contentType: '', extension: '', notFound: true };
+  async getDocumentFromRapidGator(url: string): Promise<{
+    file?: {
+      data: Readable | null;
+      contentType: string;
+      extension: string;
+      contentLength?: number;
+    };
+    statusCode?: number;
+  }> {
+    const data = await this.fetchURLFromRapid(url);
+
+    if ([401, 404].includes(data.responseStatus as number)) {
+      return { statusCode: data.responseStatus };
     }
 
     const downloadUrl = data?.response?.url;
@@ -56,28 +61,30 @@ export class RapidGatorDownloadService {
 
     const result = await this.downloadFile(downloadUrl);
 
-    return result;
+    return { file: result };
   }
 
   private async fetchDownloadUrl(url: string, sessionId: string): Promise<RapidGatorDownloadResponseDto> {
-    const params = new URLSearchParams({
-      sid: sessionId,
-      url: url,
-    });
+    try {
+      const response = await axios.get(RAPIDGATOR_GET_URL_DOWNLOAD, {
+        params: {
+          sid: sessionId,
+          url: url,
+        },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const response = await fetch(`${RAPIDGATOR_GET_URL_DOWNLOAD}?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const data = (await response.json()) as RapidGatorDownloadResponseDto;
-
-    return plainToInstance(RapidGatorDownloadResponseDto, data);
+      return plainToInstance(RapidGatorDownloadResponseDto, response.data);
+    } catch (error) {
+      return {
+        responseStatus: error.response.status,
+      };
+    }
   }
 
-  private async ensureSessionId(): Promise<string> {
+  private async authenticationSession(): Promise<string> {
     if (!this.sessionId) {
       this.sessionId = await this.getSessionDownload();
     }
@@ -101,11 +108,6 @@ export class RapidGatorDownloadService {
     return data?.response?.sessionId || '';
   }
 
-  /**
-   * 🔥 FLOW TỐI ƯU: Luôn stream + timeout 30 phút
-   * - Không buffer memory → tránh OOM
-   * - Timeout dài để server RapidGator tự control nhưng vẫn có safeguard
-   */
   async downloadFile(url: string): Promise<{
     data: Readable;
     contentType: string;
