@@ -1,8 +1,16 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  AbortMultipartUploadCommand,
+  CompleteMultipartUploadCommand,
+  CreateMultipartUploadCommand,
+  PutObjectCommand,
+  S3Client,
+  UploadPartCommand,
+} from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { logger } from 'shared/logger/app.logger';
-import { Readable } from 'stream';
+
+export type MultipartCompletedPart = { ETag: string; PartNumber: number };
 
 @Injectable()
 export class HetznerS3Service {
@@ -33,39 +41,142 @@ export class HetznerS3Service {
     }
   }
 
+  public getPublicUrlForKey(key: string): string | null {
+    if (!this.s3Client) {
+      return null;
+    }
+
+    return `https://${this.s3Bucket}.${this.s3Endpoint}/${key}`;
+  }
+
   public async upload(params: {
-    body: Uint8Array | Readable;
+    body: Uint8Array;
     key: string;
     contentType?: string;
-    contentLength?: number;
     acl?: 'private' | 'public-read' | 'public-read-write' | 'authenticated-read';
   }): Promise<string | null> {
     if (!this.s3Client) {
       return null;
     }
 
-    const { body, key, contentType = 'application/octet-stream', contentLength, acl = 'public-read' } = params;
+    const { body, key, contentType = 'application/octet-stream', acl = 'public-read' } = params;
 
-    const commandInput: any = {
-      Bucket: this.s3Bucket,
-      Key: key,
-      Body: body,
-      ContentType: contentType,
-      ACL: acl,
-    };
+    await this.s3Client.send(
+      new PutObjectCommand({
+        Bucket: this.s3Bucket,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+        ContentLength: body.length,
+        ACL: acl,
+      }),
+    );
 
-    // Set ContentLength for better S3 API compatibility
-    if (body instanceof Uint8Array) {
-      commandInput.ContentLength = body.length;
-    } else if (contentLength) {
-      commandInput.ContentLength = contentLength;
-    }
-
-    await this.s3Client.send(new PutObjectCommand(commandInput));
-
-    const s3Url = `https://${this.s3Bucket}.${this.s3Endpoint}/${key}`;
+    const s3Url = this.getPublicUrlForKey(key);
     logger.info(`[HetznerS3Service] Successfully uploaded file to ${s3Url}`);
 
     return s3Url;
+  }
+
+  public async createMultipartUpload(params: {
+    key: string;
+    contentType: string;
+    acl?: 'private' | 'public-read' | 'public-read-write' | 'authenticated-read';
+  }): Promise<{ uploadId: string }> {
+    if (!this.s3Client) {
+      throw new Error('[HetznerS3Service] S3 client is not configured');
+    }
+
+    const { key, contentType, acl = 'public-read' } = params;
+    const out = await this.s3Client.send(
+      new CreateMultipartUploadCommand({
+        Bucket: this.s3Bucket,
+        Key: key,
+        ContentType: contentType,
+        ACL: acl,
+      }),
+    );
+
+    if (!out.UploadId) {
+      throw new Error('[HetznerS3Service] createMultipartUpload missing UploadId');
+    }
+
+    return { uploadId: out.UploadId };
+  }
+
+  public async uploadPart(params: {
+    key: string;
+    uploadId: string;
+    partNumber: number;
+    body: Uint8Array;
+  }): Promise<{ etag: string }> {
+    if (!this.s3Client) {
+      throw new Error('[HetznerS3Service] S3 client is not configured');
+    }
+
+    const { key, uploadId, partNumber, body } = params;
+    const out = await this.s3Client.send(
+      new UploadPartCommand({
+        Bucket: this.s3Bucket,
+        Key: key,
+        UploadId: uploadId,
+        PartNumber: partNumber,
+        Body: body,
+        ContentLength: body.byteLength,
+      }),
+    );
+
+    if (!out.ETag) {
+      throw new Error(`[HetznerS3Service] uploadPart missing ETag for part ${partNumber}`);
+    }
+
+    return { etag: out.ETag };
+  }
+
+  public async completeMultipartUpload(params: {
+    key: string;
+    uploadId: string;
+    parts: MultipartCompletedPart[];
+  }): Promise<void> {
+    if (!this.s3Client) {
+      throw new Error('[HetznerS3Service] S3 client is not configured');
+    }
+
+    const { key, uploadId, parts } = params;
+    const sorted = [...parts].sort((a, b) => a.PartNumber - b.PartNumber);
+
+    await this.s3Client.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: this.s3Bucket,
+        Key: key,
+        UploadId: uploadId,
+        MultipartUpload: {
+          Parts: sorted.map((p) => ({ ETag: p.ETag, PartNumber: p.PartNumber })),
+        },
+      }),
+    );
+
+    logger.info(`[HetznerS3Service] Multipart upload completed for key=${key}`);
+  }
+
+  public async abortMultipartUpload(params: { key: string; uploadId: string }): Promise<void> {
+    if (!this.s3Client) {
+      return;
+    }
+
+    const { key, uploadId } = params;
+
+    try {
+      await this.s3Client.send(
+        new AbortMultipartUploadCommand({
+          Bucket: this.s3Bucket,
+          Key: key,
+          UploadId: uploadId,
+        }),
+      );
+      logger.warn(`[HetznerS3Service] Aborted multipart upload uploadId=${uploadId} key=${key}`);
+    } catch (e) {
+      logger.error(`[HetznerS3Service] abortMultipartUpload failed: ${e}`);
+    }
   }
 }
