@@ -14,7 +14,7 @@ import { UPLOAD_THUMBNAIL_POST_TO_STORAGE_WORKER_NAME } from '../upload-thumbnai
 export class ScrollJobScheduler {
   constructor(private readonly workerManager: WorkerManager) {}
 
-  //trigger
+  //trigger render
   @Cron(CronExpression.EVERY_8_HOURS) // Every day at 18:50
   async handleCrawlProcessJob(): Promise<void> {
     try {
