@@ -88,7 +88,7 @@ export class ScrollJobScheduler {
     }
   }
 
-  @Cron(CronExpression.EVERY_30_MINUTES) // Runs at 6:00, 14:00, 22:00 (every 8 hours, offset by 6 hours)
+  @Cron(CronExpression.EVERY_4_HOURS) // Runs at 6:00, 14:00, 22:00 (every 8 hours, offset by 6 hours)
   async handleUploadStoryMediaToStorageJob(): Promise<void> {
     try {
       if (this.workerManager.isWorkerRunning(UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME)) {
