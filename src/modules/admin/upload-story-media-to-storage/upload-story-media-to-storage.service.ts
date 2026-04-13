@@ -17,7 +17,7 @@ export class UploadStoryMediaToStorageService {
     private readonly rapidGatorDownloadService: RapidGatorDownloadService,
   ) {}
 
-  //
+  // triger
   public async uploadStoryMediaToStorage(): Promise<void> {
     try {
       const storiesWithEmptyInternalUrl = await this.storyRepository.getStoriesWithEmptyInternalUrl();
