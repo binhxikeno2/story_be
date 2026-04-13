@@ -6,6 +6,7 @@ import { generateUniqueFileName } from 'shared/utils/generate-unique-filename.ut
 
 import { HetznerS3Service } from '../shared/services/hetzner-s3.service';
 import { RapidGatorDownloadService } from '../shared/services/rapid-gator-download.service';
+import { randomDelay } from '../shared/utils/delay.util';
 import { CONCURRENCY_UPLOAD_STORY_MEDIA } from './upload-story-media-to-storage.constant';
 
 @Injectable()
@@ -65,6 +66,8 @@ export class UploadStoryMediaToStorageService {
                   await this.storyRepository.update(storyWithEmptyInternalUrl.id, { internalUrl });
                 }
               }
+
+              await randomDelay({ min: 1000, max: 3000, skipLast: true });
             } catch (error) {
               logger.error(
                 `[UploadStoryMediaToStorageService] Error processing story id=${storyWithEmptyInternalUrl.id}: ${error}`,
