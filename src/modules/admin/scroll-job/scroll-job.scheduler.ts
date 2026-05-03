@@ -88,7 +88,7 @@ export class ScrollJobScheduler {
     }
   }
 
-  @Cron(CronExpression.EVERY_4_HOURS)
+  @Cron(CronExpression.EVERY_2_HOURS)
   async handleUploadStoryMediaToStorageJob(): Promise<void> {
     try {
       if (this.workerManager.isWorkerRunning(UPLOAD_STORY_MEDIA_TO_STORAGE_WORKER_NAME)) {
