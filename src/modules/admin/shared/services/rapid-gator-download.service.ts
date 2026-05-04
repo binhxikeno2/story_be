@@ -234,7 +234,7 @@ export class RapidGatorDownloadService {
     let sessionId = await this.authenticationSession();
     let data = await this.fetchDownloadUrl(url, sessionId);
 
-    if (data.responseStatus === 403) {
+    if ([403, 401].includes(data.responseStatus || 0)) {
       this.sessionId = null;
       sessionId = await this.authenticationSession();
       data = await this.fetchDownloadUrl(url, sessionId);
