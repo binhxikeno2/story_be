@@ -67,7 +67,7 @@ export class UploadStoryMediaToStorageService {
                 }
               }
 
-              await randomDelay({ min: 300, max: 100, skipLast: true });
+              await randomDelay({ min: 600, max: 2000, skipLast: true });
             } catch (error) {
               logger.error(
                 `[UploadStoryMediaToStorageService] Error processing story id=${storyWithEmptyInternalUrl.id}: ${error}`,
