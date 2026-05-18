@@ -2,4 +2,4 @@ export const CRAWL_LINK_MEDIA_WORKER_NAME = 'CRAWL_LINK_MEDIA_WORKER';
 
 export const CONCURRENCY_CRAWL_LINK_MEDIA = 20;
 
-export const LIMIT_STORY = 500;
+export const LIMIT_STORY = 100;
